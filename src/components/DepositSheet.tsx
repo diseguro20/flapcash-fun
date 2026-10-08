@@ -42,6 +42,18 @@ export default function DepositSheet() {
         const data = await res.json();
         if (data.paid || data.status === 'COMPLETED') {
           setIsPaid(true);
+          const creditAmount = Number(data.amount || pixData.amount || 20);
+          try {
+            await updateBalance(creditAmount, creditAmount);
+            await recordTransaction({
+              amount: creditAmount,
+              type: 'deposit',
+              status: 'approved',
+              gateway: 'vizzionpay',
+              gatewayTransactionId: pixData.transactionId
+            });
+          } catch (e) {}
+
           try {
             confetti({
               particleCount: 100,

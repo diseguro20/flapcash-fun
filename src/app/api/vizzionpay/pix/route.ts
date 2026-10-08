@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { vizzionPay } from '@/lib/vizzionpay';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +23,23 @@ export async function POST(req: Request) {
       payerEmail,
       externalReference
     });
+
+    if (pixResult.success && pixResult.transactionId) {
+      try {
+        await setDoc(doc(db, 'deposits', pixResult.transactionId), {
+          id: pixResult.transactionId,
+          userId: userId || 'guest',
+          amount: Number(amount),
+          status: 'PENDING',
+          externalReference,
+          pixCode: pixResult.pixCode,
+          gateway: 'vizzionpay',
+          createdAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (dbErr) {
+        console.warn('[Firestore save deposit warning]:', dbErr);
+      }
+    }
 
     return NextResponse.json(pixResult);
   } catch (err: any) {

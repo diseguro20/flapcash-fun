@@ -9,7 +9,6 @@ export async function POST(req: Request) {
     try {
       rawBody = await req.json();
     } catch {
-      // payload pode ser vazio ou formato form
       const text = await req.text();
       try {
         rawBody = JSON.parse(text);
@@ -20,7 +19,6 @@ export async function POST(req: Request) {
 
     console.log('[VizzionPay Webhook Received]:', JSON.stringify(rawBody));
 
-    // Headers para verificação
     const headersObj: Record<string, string> = {};
     req.headers.forEach((val, key) => {
       headersObj[key.toLowerCase()] = val;
@@ -30,27 +28,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Invalid signature' }, { status: 401 });
     }
 
-    // Suporte amplo a formatos de webhook Vizzion Pay e acquirers
     const event = String(rawBody.event || rawBody.type || rawBody.action || '').toUpperCase();
-    const status = String(rawBody.status || rawBody.data?.status || '').toUpperCase();
-    const data = rawBody.data || rawBody;
+    const transaction = rawBody.transaction || rawBody.data || {};
+    const status = String(transaction.status || rawBody.status || '').toUpperCase();
+    const data = transaction.id ? transaction : (rawBody.data || rawBody);
 
     const externalId = String(
+      rawBody.identifier ||
+      rawBody.clientIdentifier ||
       rawBody.external_id ||
       rawBody.externalReference ||
-      rawBody.external_reference ||
+      data.identifier ||
+      data.clientIdentifier ||
       data.external_id ||
       data.externalReference ||
-      rawBody.custom_id ||
-      data.custom_id ||
+      rawBody.metadata?.referenceId ||
       rawBody.metadata?.externalId ||
       rawBody.metadata?.userId ||
       ''
     );
 
-    const transactionId = String(rawBody.id || rawBody.transaction_id || data.id || data.transaction_id || externalId || Date.now());
+    const transactionId = String(
+      data.id ||
+      data.transactionId ||
+      data.transaction_id ||
+      rawBody.id ||
+      rawBody.transactionId ||
+      rawBody.transaction_id ||
+      externalId ||
+      Date.now()
+    );
 
-    // Identificação de confirmação de pagamento
     const isPaid =
       event.includes('PAID') ||
       event.includes('COMPLETED') ||
@@ -61,31 +69,39 @@ export async function POST(req: Request) {
       status === 'CONFIRMED' ||
       status === 'SUCESSO';
 
-    // Cálculo do valor
     let rawAmount = Number(
-      data.amount_float ||
-      rawBody.amount_float ||
-      data.value ||
-      rawBody.value ||
       data.amount ||
+      data.chargeAmount ||
+      data.value ||
       rawBody.amount ||
+      rawBody.value ||
       0
     );
 
-    // Se o valor estiver em centavos (> 500 sem ponto decimal para depósitos padrão), converte
     if (rawAmount > 500 && !String(rawAmount).includes('.')) {
       rawAmount = rawAmount / 100;
     }
 
-    if (isPaid && externalId) {
+    if (isPaid && (externalId || transactionId)) {
       let targetUserId = '';
       if (externalId.startsWith('dep_')) {
         const parts = externalId.split('_');
         targetUserId = parts[1];
       } else if (rawBody.metadata?.userId) {
         targetUserId = rawBody.metadata.userId;
-      } else {
-        targetUserId = externalId;
+      }
+
+      // Se não encontrou o userId pelo externalId, consulta o registro de depósito gravado previamente
+      if (!targetUserId || targetUserId === 'guest') {
+        try {
+          const depSnap = await getDoc(doc(db, 'deposits', transactionId));
+          if (depSnap.exists()) {
+            targetUserId = depSnap.data()?.userId;
+            if (!rawAmount && depSnap.data()?.amount) {
+              rawAmount = Number(depSnap.data().amount);
+            }
+          }
+        } catch (e) {}
       }
 
       if (targetUserId && targetUserId !== 'guest') {
@@ -93,7 +109,6 @@ export async function POST(req: Request) {
           const depositRef = doc(db, 'deposits', transactionId);
           const depositSnap = await getDoc(depositRef);
 
-          // Previne crédito duplicado para o mesmo webhook
           if (!depositSnap.exists() || depositSnap.data()?.status !== 'COMPLETED') {
             const userRef = doc(db, 'users', targetUserId);
             const userSnap = await getDoc(userRef);
@@ -108,17 +123,17 @@ export async function POST(req: Request) {
                 updatedAt: new Date().toISOString()
               });
 
-              // Salva registro do depósito no Firestore
               await setDoc(depositRef, {
                 userId: targetUserId,
                 amount: rawAmount,
                 status: 'COMPLETED',
                 transactionId,
                 gateway: 'VIZZION_PAY',
-                createdAt: new Date().toISOString()
+                paidAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
               }, { merge: true });
 
-              console.log(`[VizzionPay] Saldo creditado para usuário ${targetUserId}: +R$ ${rawAmount}`);
+              console.log(`[VizzionPay Webhook] Saldo creditado para usuário ${targetUserId}: +R$ ${rawAmount}`);
             }
           }
         } catch (dbErr) {
@@ -127,7 +142,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Sempre retorna HTTP 200 para confirmar recebimento ao gateway
     return NextResponse.json({
       success: true,
       received: true,
