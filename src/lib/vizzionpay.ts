@@ -1,6 +1,7 @@
 /**
  * Vizzion Pay Gateway Integration Module
- * Suporta Cash-in (Depósito PIX com QR Code e Copia e Cola),
+ * Conecta com o Gateway oficial Vizzion Pay (API v1 /gateway)
+ * Suporta Cash-in (Depósito PIX oficial com QR Code e Copia e Cola),
  * Cash-out (Saque PIX automatizado) e Webhook de confirmação.
  */
 
@@ -81,71 +82,96 @@ export class VizzionPayService {
   }
 
   /**
-   * Gera uma cobrança PIX via Vizzion Pay
+   * Gera uma cobrança PIX via Gateway Oficial Vizzion Pay
+   * Endpoint oficial: POST /api/v1/gateway/checkout
    */
   async createPixCharge(params: CreatePixParams): Promise<PixChargeResponse> {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://flapcash-fun.vercel.app').replace(/\/$/, '');
     const callbackUrl = `${appUrl}/api/vizzionpay/webhook`;
 
-    // Tentativa de emissão direta no gateway
-    const endpointsToTry = [
-      `${this.baseUrl}/pix`,
-      `${this.baseUrl}/charges`,
-      `${this.baseUrl}/transactions`,
-      `https://checkout.vizzionpay.com.br/api/v1/pix`
-    ];
+    const cleanCpf = params.payerCpf ? params.payerCpf.replace(/\D/g, '') : '';
 
+    // 1. Chamada para a rota oficial da Vizzion Pay: /gateway/checkout
     const payload = {
-      amount: Math.round(params.amount * 100),
-      amount_float: params.amount,
+      amount: Math.round(params.amount * 100), // Em centavos
       value: params.amount,
-      external_id: params.externalReference,
+      paymentMethod: 'PIX',
+      identifier: params.externalReference,
       externalReference: params.externalReference,
-      payer: {
+      customer: {
         name: params.payerName || 'Cliente FlapCash',
-        document: params.payerCpf ? params.payerCpf.replace(/\D/g, '') : '00000000000',
-        email: params.payerEmail || 'cliente@flapcash.fun'
+        email: params.payerEmail || 'cliente@flapcash.fun',
+        document: cleanCpf || undefined,
+        cpf: cleanCpf || undefined
       },
       callbackUrl,
-      postback_url: callbackUrl,
-      webhook_url: callbackUrl
+      webhookUrl: callbackUrl,
+      postbackUrl: callbackUrl
     };
 
-    for (const url of endpointsToTry) {
+    try {
+      const response = await fetch(`${this.baseUrl}/gateway/checkout`, {
+        method: 'POST',
+        headers: {
+          'x-public-key': this.publicKey,
+          'x-secret-key': this.secretKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await response.text();
+      let data: any = {};
       try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'x-public-key': this.publicKey,
-            'x-secret-key': this.secretKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const pixCode = data.qrcode_text || data.pix_code || data.emv || data.payload || data.code || '';
-          const pixQrCode = data.qrcode_url || data.qrcode_image || (pixCode ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(pixCode)}` : '');
-          const transactionId = data.id || data.transaction_id || data.charge_id || params.externalReference;
-
-          if (pixCode) {
-            return {
-              success: true,
-              transactionId,
-              pixCode,
-              pixQrCode,
-              amount: params.amount,
-              expiresAt: data.expires_at || expiresAt,
-              isMock: false
-            };
-          }
-        }
-      } catch (err: any) {
-        // tenta próximo endpoint
+        data = JSON.parse(responseText);
+      } catch {
+        data = { raw: responseText };
       }
+
+      console.log('[VizzionPay Gateway Checkout]:', response.status, data);
+
+      if (response.ok) {
+        const pixCode =
+          data.pix?.qrCode ||
+          data.pixInformation?.qrCode ||
+          data.pix?.qrcode ||
+          data.pixCode ||
+          data.qrcode_text ||
+          data.qrCode ||
+          data.emv ||
+          data.payload ||
+          '';
+
+        const pixQrCode =
+          data.pix?.image ||
+          data.pixInformation?.image ||
+          data.pixQrCode ||
+          data.qrcode_url ||
+          data.image ||
+          (pixCode ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(pixCode)}` : '');
+
+        const transactionId = data.id || data.transactionId || data.checkoutId || params.externalReference;
+
+        if (pixCode) {
+          return {
+            success: true,
+            transactionId,
+            pixCode,
+            pixQrCode,
+            amount: params.amount,
+            expiresAt: data.expires_at || data.pix?.expiresAt || expiresAt,
+            isMock: false
+          };
+        }
+      }
+
+      if (response.status === 401 && data.message?.includes('Checkout via API')) {
+        console.warn('[VizzionPay Alerta]: "Checkout via API" desabilitado no painel da Vizzion Pay.');
+      }
+    } catch (err: any) {
+      console.error('[VizzionPay Gateway Error]:', err.message);
     }
 
     // Fallback resiliente com padrão EMV oficial do Banco Central
@@ -166,52 +192,52 @@ export class VizzionPayService {
   }
 
   /**
-   * Solicita Saque PIX (Cash-out)
+   * Solicita Saque PIX (Cash-out) no Gateway Oficial
+   * Endpoint oficial: POST /api/v1/gateway/transfers
    */
   async createPixWithdraw(params: WithdrawParams): Promise<WithdrawResponse> {
-    const endpointsToTry = [
-      `${this.baseUrl}/withdraws`,
-      `${this.baseUrl}/transfers`,
-      `${this.baseUrl}/pix/transfer`
-    ];
+    const cleanCpf = params.payerCpf ? params.payerCpf.replace(/\D/g, '') : undefined;
+    const keyTypeFormatted = params.pixKeyType?.toUpperCase() === 'CPF' ? 'CPF' : params.pixKeyType;
 
     const payload = {
-      amount: Math.round(params.amount * 100),
-      amount_float: params.amount,
-      value: params.amount,
-      pix_key: params.pixKey,
-      pix_key_type: params.pixKeyType,
-      receiver_name: params.payerName,
-      receiver_document: params.payerCpf ? params.payerCpf.replace(/\D/g, '') : undefined,
-      external_id: params.externalReference
+      identifier: params.externalReference,
+      amount: Math.round(params.amount * 100), // em centavos
+      pix: {
+        key: params.pixKey,
+        type: keyTypeFormatted
+      },
+      owner: {
+        name: params.payerName || 'Cliente',
+        document: cleanCpf
+      }
     };
 
-    for (const url of endpointsToTry) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'x-public-key': this.publicKey,
-            'x-secret-key': this.secretKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
+    try {
+      const response = await fetch(`${this.baseUrl}/gateway/transfers`, {
+        method: 'POST',
+        headers: {
+          'x-public-key': this.publicKey,
+          'x-secret-key': this.secretKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            success: true,
-            transactionId: data.id || data.transfer_id || params.externalReference,
-            status: data.status === 'completed' || data.status === 'COMPLETED' ? 'approved' : 'processing',
-            message: 'Solicitação de saque enviada com sucesso à Vizzion Pay.',
-            isMock: false
-          };
-        }
-      } catch (err: any) {
-        // tenta próximo endpoint
+      const data = await response.json();
+      console.log('[VizzionPay Gateway Transfer]:', response.status, data);
+
+      if (response.ok) {
+        return {
+          success: true,
+          transactionId: data.id || data.transferId || params.externalReference,
+          status: data.status === 'completed' || data.status === 'COMPLETED' ? 'approved' : 'processing',
+          message: 'Solicitação de saque enviada com sucesso à Vizzion Pay.',
+          isMock: false
+        };
       }
+    } catch (err: any) {
+      console.error('[VizzionPay Transfer Error]:', err.message);
     }
 
     return {
@@ -227,7 +253,6 @@ export class VizzionPayService {
    * Valida Webhook de Retorno da Vizzion Pay
    */
   verifyWebhook(headers: Record<string, string>, body: any): boolean {
-    // Valida estrutura básica
     if (!body || typeof body !== 'object') return false;
     return true;
   }

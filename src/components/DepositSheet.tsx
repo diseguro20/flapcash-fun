@@ -9,7 +9,6 @@ export default function DepositSheet() {
   const { isDepositOpen, setIsDepositOpen, user, updateBalance, recordTransaction } = useAuth();
   const [amount, setAmount] = useState<number>(20);
   const [customAmount, setCustomAmount] = useState<string>('20');
-  const [cpf, setCpf] = useState<string>(user?.cpf || '');
   const [loading, setLoading] = useState(false);
   const [pixData, setPixData] = useState<{
     transactionId: string;
@@ -24,10 +23,6 @@ export default function DepositSheet() {
   const [isPaid, setIsPaid] = useState(false);
 
   const quickAmounts = [20, 30, 50, 100, 200, 500];
-
-  useEffect(() => {
-    if (user?.cpf && !cpf) setCpf(user.cpf);
-  }, [user?.cpf]);
 
   // Countdown timer
   useEffect(() => {
@@ -92,7 +87,7 @@ export default function DepositSheet() {
         body: JSON.stringify({
           amount,
           payerName: user?.name || 'Cliente FlapCash',
-          payerCpf: cpf,
+          payerCpf: user?.cpf || '',
           payerEmail: user?.email,
           userId: user?.uid || 'guest'
         })
@@ -247,20 +242,6 @@ export default function DepositSheet() {
                   className="w-full pl-12 pr-4 py-3 bg-[#0c2415] border border-white/10 rounded-2xl text-white font-bold text-base focus:outline-none focus:border-[#22c55e] transition"
                 />
               </div>
-            </div>
-
-            {/* CPF */}
-            <div>
-              <label className="block text-xs font-bold text-[#b9d4c6] uppercase tracking-wider mb-1">
-                CPF do Titular da Conta PIX
-              </label>
-              <input
-                type="text"
-                placeholder="000.000.000-00"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[#0c2415] border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#22c55e] transition"
-              />
             </div>
 
             {/* Bonus Banner */}
