@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Plus, User, Wallet, Sparkles } from 'lucide-react';
+import { Plus, User, Wallet, Sparkles, ShieldCheck } from 'lucide-react';
 
 export default function Navbar() {
   const { user, setIsLoginOpen, setIsRegisterOpen, setIsDepositOpen, setIsProfileOpen } = useAuth();
@@ -60,6 +60,17 @@ export default function Navbar() {
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Depositar</span>
               </button>
+
+              {/* Admin Button */}
+              {(user.role === 'admin' || user.email?.toLowerCase().includes('diseguro')) && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-[#f7c948]/15 border border-[#f7c948]/40 text-[#f7c948] font-black text-xs hover:bg-[#f7c948]/25 transition"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
 
               {/* Profile icon */}
               <button

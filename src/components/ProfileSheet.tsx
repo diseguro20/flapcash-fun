@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { X, User, History, Wallet, LogOut, CheckCircle2, XCircle } from 'lucide-react';
+import { X, User, History, Wallet, LogOut, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
 
 export default function ProfileSheet() {
   const { isProfileOpen, setIsProfileOpen, user, logout, bets, transactions } = useAuth();
@@ -85,12 +85,23 @@ export default function ProfileSheet() {
               <span className="text-[#22c55e] font-mono font-bold">{user?.referralCode}</span>
             </div>
 
+            {(user?.role === 'admin' || user?.email?.toLowerCase().includes('diseguro')) && (
+              <a
+                href="/admin"
+                onClick={() => setIsProfileOpen(false)}
+                className="w-full mt-3 py-3 px-4 rounded-xl font-black text-xs bg-[#f7c948]/15 border border-[#f7c948]/40 text-[#f7c948] hover:bg-[#f7c948]/25 flex items-center justify-center gap-2 transition uppercase tracking-wider"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Painel Administrativo
+              </a>
+            )}
+
             <button
               onClick={() => {
                 logout();
                 setIsProfileOpen(false);
               }}
-              className="w-full mt-4 py-3 px-4 rounded-xl font-bold text-xs bg-red-950/60 border border-red-500/30 text-red-200 hover:bg-red-900/60 flex items-center justify-center gap-2 transition"
+              className="w-full mt-3 py-3 px-4 rounded-xl font-bold text-xs bg-red-950/60 border border-red-500/30 text-red-200 hover:bg-red-900/60 flex items-center justify-center gap-2 transition"
             >
               <LogOut className="w-4 h-4" />
               Sair da Conta

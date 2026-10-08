@@ -1,6 +1,6 @@
 /* ============================================================
-   FLAPPY �?? edição Miami (canvas puro, sem libs)
-   O jogo N�?O decide dinheiro: ele fala com o servidor pelas
+   FLAPPY �?? edição Miami (canvas puro, sem libs)
+   O jogo N�?O decide dinheiro: ele fala com o servidor pelas
    4 chamadas (start / ping / cashout / lose) e mostra o resultado.
    ============================================================ */
 (() => {
@@ -8,8 +8,8 @@
 
 const G   = window.GAME;
 const CFG = G.cfg;
-const RATE  = Number(CFG.earn_rate) || .4;   // ganho por cano = aposta �? RATE
-const METAX = Number(CFG.meta_mult) || 7;    // meta = aposta �? METAX (libera o cashout)
+const RATE  = Number(CFG.earn_rate) || .4;   // ganho por cano = aposta �? RATE
+const METAX = Number(CFG.meta_mult) || 7;    // meta = aposta �? METAX (libera o cashout)
 const STEP  = Number(CFG.bet_step)  || 5;
 const DEMO  = !!G.demo;                      // modo grátis: sem login, sem dinheiro, sem API
 const START = Math.max(1, Number(CFG.earn_start) || 1);   // começa a pagar neste cano
@@ -25,11 +25,25 @@ const metaVal  = () => Math.min(bet * METAX, CFG.max_win);          // meta pro 
 const metaHit  = () => curValue() + 1e-9 >= metaVal();
 
 async function api(path, body, tries = 1) {
+  const payload = Object.assign({}, body || {});
+  if (G.user_id && !payload.user_id) payload.user_id = G.user_id;
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(G.api + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+      const r = await fetch(G.api + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (r.status === 401) { location.href = '/?p=entrar'; throw new Error('auth'); }
-      return await r.json();
+      const res = await r.json();
+      if (res && typeof res.balance === 'number') {
+        balance = res.balance;
+        try {
+          const raw = localStorage.getItem('flapcash_user_session');
+          if (raw) {
+            const sess = JSON.parse(raw);
+            sess.balance = res.balance;
+            localStorage.setItem('flapcash_user_session', JSON.stringify(sess));
+          }
+        } catch(e) {}
+      }
+      return res;
     } catch (e) { if (i === tries - 1) throw e; await new Promise(r => setTimeout(r, 700)); }
   }
 }
@@ -46,7 +60,7 @@ const CLIPS = {};                                    // key -> HTMLAudioElement 
     const a = new Audio(url);
     a.preload = 'auto';
     /* música de fundo: volume BAIXO (é fundo, não pode competir com o jogo)
-       e em loop de verdade �?? quando acaba, recomeça sozinha. */
+       e em loop de verdade �?? quando acaba, recomeça sozinha. */
     if (k === 'bg') { a.loop = true; a.volume = .12; a.load(); }
     CLIPS[k] = a;
   } catch (e) {}
@@ -94,7 +108,7 @@ const SND = {
     s.connect(bp); bp.connect(v); v.connect(this.ctx.destination);
     s.start(t); s.stop(t + dur + .02);
   },
-  /* sino metálico curto �?? é o "tim" do dinheiro (parciais desafinados = metal) */
+  /* sino metálico curto �?? é o "tim" do dinheiro (parciais desafinados = metal) */
   bell(f, dur, g = .14, delay = 0) {
     if (!this.on || !this.ctx) return;
     const t = this.ctx.currentTime + delay, v = this.ctx.createGain();
@@ -107,7 +121,7 @@ const SND = {
     });
   },
   /* toca o arquivo do slot (clonado, pra dois disparos não se atropelarem).
-     Devolve false quando não há arquivo �?? aí o chamador usa o som interno. */
+     Devolve false quando não há arquivo �?? aí o chamador usa o som interno. */
   clip(k, vol = 1) {
     if (!this.on || !CLIPS[k]) return false;
     try {
@@ -118,8 +132,8 @@ const SND = {
     } catch (e) { return false; }
     return true;
   },
-  /* A música toca do começo ao fim da SESS�?O na tela do jogo: não para quando
-     o jogador morre nem entre rodadas �?? só quando ele sai (ou desliga o som).
+  /* A música toca do começo ao fim da SESS�?O na tela do jogo: não para quando
+     o jogador morre nem entre rodadas �?? só quando ele sai (ou desliga o som).
      Pausar sem zerar o tempo faz ela continuar de onde estava ao voltar. */
   music(play) {
     const a = CLIPS.bg;
@@ -220,14 +234,14 @@ desktopInput.addEventListener('change', queueResize);
 /* ==================== CENÁRIOS ====================
    Cada cenário sabe desenhar 4 coisas: o fundo parado (bg), o que tem
    parallax (props), os canos (pipe) e o chão (ground). Trocar de cenário
-   N�?O mexe em nada da física �?? cano, pulo e queda seguem iguais.
+   N�?O mexe em nada da física �?? cano, pulo e queda seguem iguais.
    Cenário novo = só adicionar aqui embaixo que ele já aparece no seletor. */
 let sceneKey = 'classico';
 function SCENE() { return SCENES[sceneKey] || SCENES.classico; }
 
 const SCENES = {
 
-  /* ---------- CLÁSSICO (padrão) �?? a cara do flappy original ---------- */
+  /* ---------- CLÁSSICO (padrão) �?? a cara do flappy original ---------- */
   classico: {
     nome: 'Clássico',
     dica: 'Céu azul e canos verdes',
@@ -457,7 +471,7 @@ function prerenderBg() {
   SCENE().bg(b);
 }
 
-/* palmeira (silhueta) �?? usada pelo cenário Miami */
+/* palmeira (silhueta) �?? usada pelo cenário Miami */
 function drawPalm(px, baseY, s, sway) {
   ctx.save();
   ctx.translate(px, baseY);
@@ -494,7 +508,7 @@ let readyY = 0, rewind = null;          // posição de espera e o retrocesso do
 let tLast = 0, tGlobal = 0;
 
 /* Voo e obstáculos: tudo o que muda por preset vem da Central de Controle
-   (os controles de 0�??100% já chegam aqui traduzidos em pixels/segundo). */
+   (os controles de 0�??100% já chegam aqui traduzidos em pixels/segundo). */
 const PH       = CFG.phys || {};
 const PIPE_W   = 68;
 const SPACING  = Number(PH.spacing)  || 340;     // distância entre um cano e outro
@@ -541,7 +555,7 @@ function spawnPipes() {
     /* Degrau de altura de um cano pro outro.
        Teto: nunca mais do que o pássaro consegue subir/descer no tempo até
        chegar lá (senão vira queda brusca impossível quando acelera).
-       Piso: SEMPRE muda de altura um mínimo �?? sem isso o jogo rápido virava
+       Piso: SEMPRE muda de altura um mínimo �?? sem isso o jogo rápido virava
        um túnel reto e o jogador só segurava o dedo até a meta. */
     const tAtePipe = SPACING / Math.max(1, speedNow());       // segundos até o próximo cano
     const teto  = Math.min(pipeIdx < EASY ? HVAR * .2 : HVAR,
@@ -570,7 +584,7 @@ const hudBet = $('hud-bet'), hudSaldo = $('hud-saldo'), hudWin = $('hud-win'), h
 const btnCash = $('btn-cash'), cashVal = $('cash-val'), btnSair = $('btn-sair'), btnSound = $('btn-sound');
 const ovBet = $('ov-bet'), ovWin = $('ov-win'), ovDead = $('ov-dead'), msgTap = $('msg-tap');
 
-/* o acumulado encolhe a fonte até caber no espaço entre os dois cards do topo �??
+/* o acumulado encolhe a fonte até caber no espaço entre os dois cards do topo �??
    sem isso, valor de 4 dígitos passa por cima da Aposta e da Meta. */
 function fitWin() {
   const WIN_FS = desktopLayout && window.innerWidth >= 900 ? 44 : 34;
@@ -584,12 +598,12 @@ function hud() {
   hudBet.textContent = fmt(bet);
   hudSaldo.textContent = DEMO ? 'JOGO GRÁTIS' : 'Saldo ' + fmt(balance);
   hudWin.textContent = fmt(val);
-  hudMeta.textContent = metaHit() ? 'LIBERADO �??' : fmt(meta);
+  hudMeta.textContent = metaHit() ? 'LIBERADO �??' : fmt(meta);
   hudMeta.classList.toggle('ok', metaHit());
   fitWin();
   document.getElementById('stage').classList.toggle('can-cashout', (state === 'fly' || state === 'ready') && metaHit());
   hudBar.style.width = Math.min(100, Math.round(val / meta * 100)) + '%';
-  /* o botão só nasce quando a meta bate �?? antes disso nada na tela atrapalhando.
+  /* o botão só nasce quando a meta bate �?? antes disso nada na tela atrapalhando.
      Vale voando E na espera do toque: quem já bateu a meta resgata quando quiser. */
   if ((state === 'fly' || state === 'ready') && metaHit()) {
     btnCash.style.display = 'flex';
@@ -606,11 +620,11 @@ function showFlightPrompt(kind = 'start') {
   const desktop = desktopInput.matches;
   msgTap.querySelector('.t1').textContent = kind === 'paused' ? 'Pausado' : kind === 'retry' ? 'Quase!' : desktop ? 'Pronto para voar?' : 'Toque para voar';
   msgTap.querySelector('.t2').textContent = desktop
-    ? (kind === 'paused' ? 'Clique no cenário ou use Espaço / �?? para continuar.' : 'Clique no cenário ou use Espaço / �?? para bater as asas.')
+    ? (kind === 'paused' ? 'Clique no cenário ou use Espaço / �?? para continuar.' : 'Clique no cenário ou use Espaço / �?? para bater as asas.')
     : (kind === 'paused' ? 'Toque para continuar' : kind === 'retry' ? 'Toque para voltar a voar' : 'Toque na tela para bater as asas');
 }
 
-/* tela de aposta (stepper �?? valor �?, atalhos, meta) */
+/* tela de aposta (stepper �?? valor �?, atalhos, meta) */
 const chipsBox = $('chips'), betErr = $('bet-err'), btnPlay = $('btn-play'), betSaldo = $('bet-saldo');
 const betVal = $('bet-val'), betShow = $('bet-show'), metaShow = $('meta-show'), betLimits = $('bet-limits');
 const PRESETS = [5, 20, 100, 500].filter(v => v >= CFG.min_bet && v <= CFG.max_bet);
@@ -644,7 +658,7 @@ PRESETS.forEach(v => {
 $('bet-minus').onclick = () => setBet(bet - STEP);
 $('bet-plus').onclick = () => setBet(bet + STEP);
 
-/* rodada grátis: nada de escolher valor �?? entra direto no "toque para voar" */
+/* rodada grátis: nada de escolher valor �?? entra direto no "toque para voar" */
 function startDemoRound() {
   roundId = 'demo';
   resgateEmCurso = false;
@@ -741,7 +755,7 @@ function finishLoss() {
   if (state === 'dead') return;                 // não repete se o loop chamar de novo
   state = 'dead';
   const linha = () => 'Aposta -' + fmt(bet) + ' · saldo ' + fmt(balance);
-  /* mostra a mensagem NA HORA �?? o saldo já está descontado desde o início da
+  /* mostra a mensagem NA HORA �?? o saldo já está descontado desde o início da
      rodada, então não precisa esperar a resposta do servidor pra avisar. */
   $('dead-sub').textContent = 'Você passou ' + units + ' ' + CFG.unit_label + '. Ajuste o ritmo e tente outra rodada.';
   $('dead-val').textContent = linha();
@@ -756,9 +770,9 @@ function finishLoss() {
 /* ---- segunda chance do teste grátis ----
    No jogo grátis, bater antes da meta não encerra: o mundo volta ~1 segundo,
    o pássaro reaparece na altura do buraco do próximo cano e o jogo espera o
-   toque de novo. O dinheiro acumulado N�?O volta (os canos já passados seguem
+   toque de novo. O dinheiro acumulado N�?O volta (os canos já passados seguem
    marcados), então ninguém pontua duas vezes. */
-/* No teste grátis a rodada N�?O acaba batendo: o mundo retrocede e o jogo
+/* No teste grátis a rodada N�?O acaba batendo: o mundo retrocede e o jogo
    continua, quantas vezes for. A única forma de encerrar é o jogador clicar
    em resgatar (aí entra a tela de "você poderia ter ganho"). */
 let resgateEmCurso = false;
@@ -914,7 +928,7 @@ function update(dt) {
         : { x: BIRD_X + 46, y: bird.y - 24, t: (START - units) + ' p/ começar', a: 1, big: false, c: '#a3b8c8' });
       if (hitNow) {
         SND.cash();
-        floats.push({ x: W / 2, y: H * .32, t: 'META BATIDA! �??�', a: 1.5, big: true, c: '#f7c948' });
+        floats.push({ x: W / 2, y: H * .32, t: 'META BATIDA! �??�', a: 1.5, big: true, c: '#f7c948' });
       } else SND.score();
       if (!DEMO && units % 3 === 0) api('ping', { round_id: roundId, units }).catch(() => {});
       hud();
@@ -943,7 +957,7 @@ function updateFx(dt) {
 /* ---------------- render ---------------- */
 function drawPipe(p) { SCENE().pipe(p); }
 
-/* Mascote enviado no admin (aba Mascote). O desenho interno só entra quando N�?O
+/* Mascote enviado no admin (aba Mascote). O desenho interno só entra quando N�?O
    existe mascote configurado, ou quando a imagem falha de verdade. Enquanto ela
    está baixando não desenhamos nada: antes piscava o passarinho antigo por um
    instante no primeiro acesso (ctrl+shift+R), e a troca na cara do jogador
@@ -974,7 +988,7 @@ function drawBirdImg() {
   ctx.restore();
 }
 
-/* mascote oficial �?? MESMA arte do SVG do site, desenhada via Path2D */
+/* mascote oficial �?? MESMA arte do SVG do site, desenhada via Path2D */
 const ART = {
   tail:   new Path2D('M30 62 C 18 53 7 55 6 63 C 12 69 21 70 30 71 Z'),
   wing:   new Path2D('M50 64 C 39 64 30 57 30 46 C 43 50 50 57 52 62 Z'),
@@ -1072,7 +1086,7 @@ function render() {
      Feito AQUI (e não com backdrop-filter no CSS) porque o pássaro é desenhado
      depois: assim o cenário sai borrado e o mascote continua nítido.
      Um único drawImage do próprio canvas por cima = barato. Navegador antigo
-     sem ctx.filter só ignora o borrão �?? nada quebra. */
+     sem ctx.filter só ignora o borrão �?? nada quebra. */
   if (msgTap.style.display === 'flex') {
     ctx.save();
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
@@ -1084,7 +1098,7 @@ function render() {
     ctx.restore();
   }
 
-  // pássaro (nada é desenhado durante o carregamento do mascote �?? ver MASCOT)
+  // pássaro (nada é desenhado durante o carregamento do mascote �?? ver MASCOT)
   if (state !== 'bet') {
     if (mascotePronto())            drawBirdImg();
     else if (!MASCOT || MASCOT_ERRO) drawBirdReal();

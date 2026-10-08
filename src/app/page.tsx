@@ -6,10 +6,12 @@ import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/Footer';
 import FlappyBirdGame from '@/components/FlappyBirdGame';
 import InfoDocModal from '@/components/InfoDocModal';
+import MemberDashboard from '@/components/MemberDashboard';
 import { Check, Star, Play, Sparkles, X } from 'lucide-react';
 
 export default function HomePage() {
   const { user, setIsLoginOpen, setIsRegisterOpen, setIsForgotPasswordOpen } = useAuth();
+
   const [liveCount, setLiveCount] = useState(2499);
   const [arenaCount, setArenaCount] = useState(2670);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
@@ -49,6 +51,10 @@ export default function HomePage() {
       setCurrentDoc(p);
     }
   }, [setIsLoginOpen, setIsRegisterOpen, setIsForgotPasswordOpen]);
+
+  if (user) {
+    return <MemberDashboard />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

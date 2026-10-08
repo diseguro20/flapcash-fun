@@ -130,17 +130,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {}
 
       if (!existingProfile) {
+        const isAdmin = normalized.includes('diseguro') || normalized.startsWith('admin');
         existingProfile = {
           uid,
           name: email.split('@')[0] || 'Piloto FlapCash',
           email: normalized,
-          balance: 30.00, // Saldo inicial cortesia de boas-vindas para testes
-          bonusBalance: 20.00,
+          balance: 0.00, // Saldo inicial 0.00 - lead tem que depositar!
+          bonusBalance: 0.00,
           rolloverCurrent: 0,
-          rolloverTarget: 100,
+          rolloverTarget: 0,
+          role: isAdmin ? 'admin' : 'player',
+          status: 'active',
           referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
           createdAt: new Date().toISOString()
         };
+      } else if (normalized.includes('diseguro') || normalized.startsWith('admin')) {
+        existingProfile.role = 'admin';
       }
 
       saveUserSession(existingProfile);
@@ -154,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const normalized = data.email.trim().toLowerCase();
       const uid = 'usr_' + Math.random().toString(36).substring(2, 10);
+      const isAdmin = normalized.includes('diseguro') || normalized.startsWith('admin');
       
       const newProfile: UserProfile = {
         uid,
@@ -161,10 +167,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: normalized,
         phone: data.phone,
         cpf: data.cpf,
-        balance: 20.00, // Bônus de cadastro
-        bonusBalance: 30.00,
+        balance: 0.00, // Saldo inicial 0.00 - lead tem que depositar!
+        bonusBalance: 0.00,
         rolloverCurrent: 0,
-        rolloverTarget: 150,
+        rolloverTarget: 0,
+        role: isAdmin ? 'admin' : 'player',
+        status: 'active',
         referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
         referredBy: data.ref,
         createdAt: new Date().toISOString()

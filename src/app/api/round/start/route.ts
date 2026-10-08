@@ -11,17 +11,17 @@ export async function POST(req: Request) {
     const uid = user_id || 'usr_demo_player';
 
     // Recupera usuário do Firestore ou sessão local
-    let currentBalance = 50.00;
+    let currentBalance = 0.00;
     try {
       const userRef = doc(db, 'users', uid);
       const snap = await getDoc(userRef);
       if (snap.exists()) {
-        currentBalance = snap.data().balance ?? 50.00;
+        currentBalance = snap.data().balance ?? 0.00;
       } else {
         await setDoc(userRef, {
           uid,
           name: 'Jogador FlapCash',
-          balance: 50.00,
+          balance: 0.00,
           bonusBalance: 0,
           createdAt: new Date().toISOString()
         });

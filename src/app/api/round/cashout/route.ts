@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const multiplier = Number((cleared >= 7 ? cleared * 1.0 : 7.0).toFixed(2));
     const payout = Number((bet * multiplier).toFixed(2));
 
-    let newBalance = 50.00;
+    let newBalance = payout;
     try {
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { round_id, units } = body;
 
-    let balance = 50.00;
+    let balance = 0.00;
     if (round_id) {
       try {
         const roundSnap = await getDoc(doc(db, 'rounds', round_id));
@@ -33,6 +33,6 @@ export async function POST(req: Request) {
       balance
     });
   } catch (err: any) {
-    return NextResponse.json({ ok: true, balance: 50.00 });
+    return NextResponse.json({ ok: true, balance: 0.00 });
   }
 }

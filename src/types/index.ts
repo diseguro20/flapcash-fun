@@ -10,6 +10,8 @@ export interface UserProfile {
   rolloverTarget: number;
   referralCode: string;
   referredBy?: string;
+  role?: 'admin' | 'player';
+  status?: 'active' | 'suspended';
   createdAt: string;
 }
 
