@@ -881,7 +881,23 @@ cv.addEventListener('pointerdown', event => {
   cv.focus({preventScroll:true});
   flap();
 });
+document.getElementById('stage')?.addEventListener('pointerdown', event => {
+  if (event.target.closest?.('button, a, input, select, textarea, .panel, #btn-cash, #btn-sair, #btn-sound')) return;
+  if (event.button !== 0 || !event.isPrimary) return;
+  if (state === 'ready' || state === 'fly') {
+    event.preventDefault();
+    cv.focus({preventScroll:true});
+    flap();
+  }
+});
 document.addEventListener('keydown', e => {
+  if ((e.code === 'Enter' || e.code === 'Space') && state === 'bet') {
+    if (!e.target.closest?.('button,a,input,select,textarea')) {
+      e.preventDefault();
+      if (!btnPlay.disabled) btnPlay.click();
+      return;
+    }
+  }
   if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
   if (e.target.closest?.('button,a,input,select,textarea,[contenteditable="true"],[role="button"]')) return;
   if (e.ctrlKey || e.altKey || e.metaKey || e.repeat || e.isComposing) return;

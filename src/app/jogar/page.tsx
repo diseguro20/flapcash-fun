@@ -6,9 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function JogarPage() {
-  const { user, updateBalance } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [initialSrc, setInitialSrc] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -22,17 +23,25 @@ export default function JogarPage() {
     return () => window.removeEventListener('message', handleMessage);
   }, [router]);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    if (mounted && !initialSrc) {
+      if (user) {
+        const isInfluencer = Boolean(user.isInfluencer);
+        setInitialSrc(
+          `/game/index.html?demo=false&uid=${encodeURIComponent(user.uid)}&balance=${encodeURIComponent(user.balance)}&influencer=${isInfluencer ? 'true' : 'false'}`
+        );
+      } else {
+        setInitialSrc('/game/index.html?demo=true');
+      }
+    }
+  }, [mounted, user, initialSrc]);
 
-  const isInfluencer = Boolean(user?.isInfluencer);
-  const iframeSrc = user
-    ? `/game/index.html?demo=false&uid=${encodeURIComponent(user.uid)}&balance=${encodeURIComponent(user.balance)}&influencer=${isInfluencer ? 'true' : 'false'}`
-    : `/game/index.html?demo=true`;
+  if (!mounted || !initialSrc) return null;
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-[#05130c] z-[9999] overflow-hidden">
       <iframe
-        src={iframeSrc}
+        src={initialSrc}
         className="w-full h-full border-0 block"
         allow="autoplay"
         title="FlapCash Original Game"
