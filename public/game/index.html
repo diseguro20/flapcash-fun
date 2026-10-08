@@ -259,11 +259,28 @@
   } catch(e) {}
 
   var uid = uidParam || (userSession ? userSession.uid : null);
-  var isDemo = (isDemoParam === 'true') || (!uid);
 
-  var influencerParam = urlParams.get('influencer');
-  var isInfluencer = (influencerParam === 'true') || (userSession && (userSession.isInfluencer === true || userSession.is_influencer === 1));
+  // Determinação rigorosa de modo Demo
+  var isDemo = false;
+  if (isDemoParam === 'true') {
+    isDemo = true;
+  } else if (isDemoParam === 'false') {
+    isDemo = false;
+  } else if (!uid) {
+    isDemo = true;
+  }
 
+  // Determinação rigorosa de modo Influencer
+  var isInfluencer = false;
+  if (influencerParam === 'true') {
+    isInfluencer = true;
+  } else if (influencerParam === 'false') {
+    isInfluencer = false;
+  } else if (userSession && (userSession.isInfluencer === true || userSession.is_influencer === 1)) {
+    isInfluencer = true;
+  }
+
+  // Apenas Influencer e Demo têm a facilidade da prévia. Lead normal joga no modo original IMPOSSÍVEL.
   var isEasy = isDemo || isInfluencer;
   
   var balance = 0;
@@ -274,24 +291,35 @@
     balance = parseFloat(balanceParam) || balance;
   }
 
+  // Configuração física precisa:
+  // - Modo Fácil (Demo / Influencer): ampla margem, gravidade leve, buracos gigantes de 255px, velocidade suave
+  // - Modo Normal (Leads / Apostado): DIFICULDADE ORIGINAL DO FLAPPY BIRD ("IMPOSSÍVEL"), buracos estreitos de 132px, gravidade pesada, canos próximos de 168px, variação de altura abrupta, colisão rigorosa
   var physConfig = isEasy ? {
-    speed0: 118,
-    speedMax: 138,
-    accel: 0.08,
+    speed0: 115,
+    speedMax: 135,
+    accel: 0.05,
     gap0: 255,
-    gapMin: 210,
-    taper: 0.2,
+    gapMin: 215,
+    taper: 0.1,
     spacing: 260,
-    hvar: 55
+    hvar: 55,
+    grav: 730,
+    flap: -210,
+    maxfall: 330,
+    hit: 13
   } : {
-    speed0: 135,
-    speedMax: 175,
-    accel: 0.35,
-    gap0: 218,
-    gapMin: 155,
-    taper: 2.2,
-    spacing: 220,
-    hvar: 125
+    speed0: 155,
+    speedMax: 215,
+    accel: 2.0,
+    gap0: 132,
+    gapMin: 108,
+    taper: 3.5,
+    spacing: 168,
+    hvar: 195,
+    grav: 1020,
+    flap: -285,
+    maxfall: 560,
+    hit: 20.8
   };
 
   window.GAME = {

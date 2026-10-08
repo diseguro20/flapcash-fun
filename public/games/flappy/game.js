@@ -518,20 +518,20 @@ let tLast = 0, tGlobal = 0;
    (os controles de 0�??100% já chegam aqui traduzidos em pixels/segundo). */
 const PH       = CFG.phys || {};
 const PIPE_W   = 68;
-const SPACING  = Number(PH.spacing)  || 340;     // distância entre um cano e outro
-const GAP0     = Number(PH.gap0)     || 232;     // abertura inicial da passagem
-const GAP_MIN  = Math.min(GAP0, Number(PH.gapMin) || 185);   // menor abertura permitida
-const TAPER    = Number(PH.taper)    || 0;       // quanto a passagem fecha por cano
-const SPEED0   = Number(PH.speed0)   || 130;     // velocidade inicial
-const SPEED_MAX= Math.max(SPEED0, Number(PH.speedMax) || 160);
-const ACCEL    = Number(PH.accel)    || 0;       // ganho de velocidade por cano
-const HVAR     = Number(PH.hvar)     || 150;     // variação da altura da passagem
-/* Voo do pássaro (vale pro grátis e pro apostado):
-   pulo mais curto = mais toques e controle mais fino. A gravidade e a
-   queda máxima acompanham, senão o pulinho não sustenta a altura. */
-const GRAV = 760, FLAP = -220, MAXFALL = 350;
-const BIRD_R = 22;                 // pássaro maior
-const HIT = EASY_MODE ? BIRD_R - 9 : BIRD_R - 5; // hitbox bem mais generosa para modo fácil/influencer
+const SPACING  = Number(PH.spacing)  || (EASY_MODE ? 260 : 168);     // distância entre um cano e outro
+const GAP0     = Number(PH.gap0)     || (EASY_MODE ? 255 : 132);     // abertura inicial da passagem
+const GAP_MIN  = Math.min(GAP0, Number(PH.gapMin) || (EASY_MODE ? 215 : 108));   // menor abertura permitida
+const TAPER    = Number(PH.taper)    || (EASY_MODE ? 0.1 : 3.5);       // quanto a passagem fecha por cano
+const SPEED0   = Number(PH.speed0)   || (EASY_MODE ? 115 : 155);     // velocidade inicial
+const SPEED_MAX= Math.max(SPEED0, Number(PH.speedMax) || (EASY_MODE ? 135 : 215));
+const ACCEL    = Number(PH.accel)    || (EASY_MODE ? 0.05 : 2.0);       // ganho de velocidade por cano
+const HVAR     = Number(PH.hvar)     || (EASY_MODE ? 55 : 195);     // variação da altura da passagem
+/* Voo do pássaro */
+const GRAV     = Number(PH.grav)     || (EASY_MODE ? 730 : 1020);
+const FLAP     = Number(PH.flap)     || (EASY_MODE ? -210 : -285);
+const MAXFALL  = Number(PH.maxfall)  || (EASY_MODE ? 330 : 560);
+const BIRD_R   = 22;                 // pássaro
+const HIT      = Number(PH.hit)      || (EASY_MODE ? BIRD_R - 9 : BIRD_R - 1.2); // hitbox estrita para lead normal, generosa para influencer/demo
 
 let pipeIdx = 0;                                 // quantos canos já nasceram nesta rodada
 
