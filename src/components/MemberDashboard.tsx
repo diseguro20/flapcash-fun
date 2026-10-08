@@ -38,22 +38,9 @@ export default function MemberDashboard() {
   const [sideOpen, setSideOpen] = useState(false);
   const [cena, setCena] = useState<'classico' | 'miami'>('miami');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [copiedInfluencerLink, setCopiedInfluencerLink] = useState(false);
-
   const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('diseguro');
   const isInfluencer = Boolean(user?.isInfluencer);
   const balance = Number(user?.balance || 0);
-
-  const influencerRefCode = user?.referralCode || 'admin777';
-  const influencerRefLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/?ref=${influencerRefCode}`
-    : `https://flapcash.fun/?ref=${influencerRefCode}`;
-
-  const handleCopyInfluencer = () => {
-    navigator.clipboard.writeText(influencerRefLink);
-    setCopiedInfluencerLink(true);
-    setTimeout(() => setCopiedInfluencerLink(false), 2500);
-  };
 
   const handlePlayNow = () => {
     if (balance < 5) {
@@ -147,10 +134,23 @@ export default function MemberDashboard() {
                 setIsReferralOpen(true);
                 setSideOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[#cfe6d8] hover:bg-white/5 transition"
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition ${
+                isInfluencer
+                  ? 'bg-[#f7c948]/15 text-[#f7c948] font-black border border-[#f7c948]/30 hover:bg-[#f7c948]/25'
+                  : 'text-[#cfe6d8] hover:bg-white/5'
+              }`}
             >
-              <TrendingUp className="w-4 h-4 text-[#8fae9c]" />
-              <span>Indicar Amigos</span>
+              {isInfluencer ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-[#f7c948]" />
+                  <span>Aba Afiliados (VIP)</span>
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-4 h-4 text-[#8fae9c]" />
+                  <span>Aba Afiliados</span>
+                </>
+              )}
             </button>
 
             <button
@@ -163,19 +163,6 @@ export default function MemberDashboard() {
               <User className="w-4 h-4 text-[#8fae9c]" />
               <span>Meu Perfil</span>
             </button>
-
-            {isInfluencer && (
-              <button
-                onClick={() => {
-                  setIsReferralOpen(true);
-                  setSideOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#f7c948]/15 text-[#f7c948] font-black border border-[#f7c948]/30 hover:bg-[#f7c948]/25 transition"
-              >
-                <Sparkles className="w-4 h-4 text-[#f7c948]" />
-                <span>Modo Influencer</span>
-              </button>
-            )}
 
             {isAdmin && (
               <Link
@@ -310,71 +297,6 @@ export default function MemberDashboard() {
             </div>
           </div>
         </header>
-
-        {/* BANNER MODO INFLUENCER ATIVO */}
-        {isInfluencer && (
-          <div className="w-full max-w-[1180px] mx-auto px-4 mt-4">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1c1504] via-[#2d2106] to-[#120d02] border-2 border-[#f7c948]/60 p-5 sm:p-6 shadow-[0_12px_40px_rgba(247,201,72,0.18)]">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-[#f7c948]/10 rounded-full blur-3xl pointer-events-none" />
-              
-              <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-                <div className="space-y-1.5">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f7c948]/20 border border-[#f7c948]/40 text-[#f7c948] text-[11px] font-black uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Modo Influenciador Oficial Ativo</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase flex items-center gap-2">
-                    Painel de Divulgação do Parceiro <span className="text-[#f7c948]">★</span>
-                  </h3>
-                  <p className="text-xs text-[#d1c29b] max-w-xl">
-                    Seu perfil está liberado como influenciador da banca. Compartilhe seu link exclusivo abaixo e receba comissões automáticas no seu saldo a cada depósito dos leads.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
-                    <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-[#f7c948]/30 text-[#f7c948] font-bold">
-                      💰 Comissão Direta: <strong className="text-white">{user?.affiliateRate || 10}%</strong>
-                    </span>
-                    <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-[#f7c948]/30 text-[#f7c948] font-bold">
-                      👥 Sub-afiliados N2: <strong className="text-white">{user?.subAffiliateRate || 2}%</strong>
-                    </span>
-                    <span className="px-2.5 py-1 rounded-lg bg-[#22c55e]/20 border border-[#22c55e]/40 text-[#86efac] font-bold">
-                      ✓ Status: Verificado e Ativo
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch lg:items-center gap-2.5 bg-black/50 p-2.5 rounded-2xl border border-[#f7c948]/30">
-                  <div className="flex-1 min-w-[220px] px-3 py-2 bg-[#0d0902] rounded-xl border border-white/5 font-mono text-xs text-[#f7c948] truncate">
-                    {influencerRefLink}
-                  </div>
-                  <button
-                    onClick={handleCopyInfluencer}
-                    className="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-[#f7c948] to-[#eab308] text-black hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 shadow-lg flex-shrink-0"
-                  >
-                    {copiedInfluencerLink ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>Copiado! ✓</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>Copiar Link</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setIsReferralOpen(true)}
-                    className="px-4 py-2.5 rounded-xl font-bold text-xs bg-white/10 text-white hover:bg-white/20 transition flex items-center justify-center gap-1.5 flex-shrink-0"
-                  >
-                    <Share2 className="w-3.5 h-3.5 text-[#f7c948]" />
-                    <span>Relatório</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* HERO SECTION DO JOGO COM CENÁRIO ANIMADO SVG */}
         <section className="relative w-full max-w-[1180px] mx-auto my-4 sm:my-6 rounded-3xl overflow-hidden shadow-2xl border border-[#22c55e]/20">
