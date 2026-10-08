@@ -152,6 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
     if (newUser) {
       localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newUser));
+      if (newUser.role === 'admin' || (newUser.email || '').toLowerCase().includes('diseguro')) {
+        localStorage.setItem('flapcash_admin_auth', 'flapcash_admin_2026');
+      }
       // Persiste no Firestore e via API
       try {
         setDoc(doc(db, 'users', newUser.uid), {
@@ -170,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {}
     } else {
       localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+      localStorage.removeItem('flapcash_admin_auth');
     }
   };
 
@@ -183,12 +187,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/auth/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: normalized, username: normalized })
+          body: JSON.stringify({ email: normalized, username: normalized, password: pass })
         });
         const resData = await res.json();
         if (resData.ok && resData.user) {
           saveUserSession(resData.user);
           return { success: true };
+        } else if (resData.error) {
+          return { success: false, message: resData.error };
         }
       } catch (e) {
         console.warn('Sync API login notice:', e);

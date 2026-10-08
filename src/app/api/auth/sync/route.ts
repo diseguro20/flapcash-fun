@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { uid, email, username, name, phone, cpf, ref } = body;
+    const { uid, email, username, name, phone, cpf, ref, password } = body;
 
     if (!email && !uid && !username) {
       return NextResponse.json({ error: 'Identificador ausente' }, { status: 400 });
@@ -38,6 +38,22 @@ export async function POST(req: Request) {
       const dt = snap.data();
       const isAdmin = dt.role === 'super_admin' || dt.role === 'admin' || normEmail.includes('diseguro') || normEmail.startsWith('admin');
       const isInfluencer = Boolean(dt.is_influencer === 1 || dt.is_influencer === true || dt.isInfluencer === true);
+
+      // Validação de senha
+      if (password) {
+        if (isAdmin) {
+          if (password !== 'diego2001' && dt.password && dt.password !== password) {
+            return NextResponse.json({ ok: false, error: 'Senha incorreta para a conta de administrador.' }, { status: 401 });
+          }
+        } else if (dt.password && dt.password !== password) {
+          return NextResponse.json({ ok: false, error: 'Senha incorreta.' }, { status: 401 });
+        }
+      }
+
+      // Garante que o documento tenha a senha gravada
+      if (password && dt.password !== password) {
+        await setDoc(userRef, { password }, { merge: true });
+      }
 
       return NextResponse.json({
         ok: true,

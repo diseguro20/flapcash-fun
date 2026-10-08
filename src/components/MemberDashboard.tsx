@@ -254,6 +254,17 @@ export default function MemberDashboard() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* BOTÃO ADMIN NO HEADER */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f7c948]/20 border border-[#f7c948]/45 text-[#f7c948] hover:bg-[#f7c948]/30 transition text-xs font-black shadow-sm"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Admin</span>
+              </Link>
+            )}
+
             {/* BOTÃO INDIQUE E GANHE NO HEADER */}
             <button
               onClick={() => setIsReferralOpen(true)}

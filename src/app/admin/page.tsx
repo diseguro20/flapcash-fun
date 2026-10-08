@@ -57,8 +57,10 @@ const moneyFormat = new Intl.NumberFormat('pt-BR', { style: 'currency', currency
 const dateFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [authorized, setAuthorized] = useState<boolean>(false);
+  const [adminEmail, setAdminEmail] = useState<string>('diseguro20@gmail.com');
+  const [adminPassword, setAdminPassword] = useState<string>('');
   const [adminPin, setAdminPin] = useState<string>('');
   const [tab, setTab] = useState<Tab>('overview');
   const [query, setQuery] = useState('');
@@ -89,7 +91,7 @@ export default function AdminPage() {
     }
     // Verifica sessão salva no localStorage
     const savedPin = localStorage.getItem('flapcash_admin_auth');
-    if (savedPin === 'flapcash_admin_2026') {
+    if (savedPin === 'flapcash_admin_2026' || savedPin === 'diego2001') {
       setAuthorized(true);
     }
   }, [user]);
@@ -120,14 +122,28 @@ export default function AdminPage() {
     }
   }, [authorized, loadDashboard]);
 
-  const handlePinSubmit = (e: React.FormEvent) => {
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminPin === 'flapcash_admin_2026' || adminPin === 'admin' || adminPin === '2026') {
+    const cleanPin = adminPin.trim();
+    const cleanPass = adminPassword.trim();
+    const cleanEmail = adminEmail.trim().toLowerCase();
+
+    if (
+      cleanPin === 'diego2001' ||
+      cleanPin === 'flapcash_admin_2026' ||
+      cleanPin === 'admin' ||
+      cleanPin === '2026' ||
+      cleanPass === 'diego2001' ||
+      (cleanEmail.includes('diseguro') && (cleanPass === 'diego2001' || cleanPin === 'diego2001'))
+    ) {
       localStorage.setItem('flapcash_admin_auth', 'flapcash_admin_2026');
+      if (login) {
+        await login('diseguro20@gmail.com', 'diego2001');
+      }
       setAuthorized(true);
       setError('');
     } else {
-      setError('Chave de acesso incorreta. Apenas administradores autorizados.');
+      setError('Credenciais incorretas. Use o e-mail diseguro20@gmail.com e senha diego2001.');
     }
   };
 
@@ -193,14 +209,33 @@ export default function AdminPage() {
             Acesso restrito ao operador da banca e jogos por habilidade.
           </p>
 
-          <form onSubmit={handlePinSubmit} className="space-y-4">
+          <form onSubmit={handlePinSubmit} className="space-y-4 text-left">
             <div>
+              <label className="block text-xs font-bold text-[#b9d4c6] uppercase tracking-wider mb-1.5">
+                E-mail de Administrador
+              </label>
+              <input
+                type="email"
+                placeholder="diseguro20@gmail.com"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                className="w-full bg-[#030905] border border-[#22c55e]/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#22c55e]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#b9d4c6] uppercase tracking-wider mb-1.5">
+                Senha / Chave Mestra
+              </label>
               <input
                 type="password"
-                placeholder="Insira a Chave Mestra de Admin..."
-                value={adminPin}
-                onChange={(e) => setAdminPin(e.target.value)}
-                className="w-full bg-[#030905] border border-[#22c55e]/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#22c55e] text-center tracking-widest font-mono"
+                placeholder="Senha (diego2001)"
+                value={adminPassword || adminPin}
+                onChange={(e) => {
+                  setAdminPassword(e.target.value);
+                  setAdminPin(e.target.value);
+                }}
+                className="w-full bg-[#030905] border border-[#22c55e]/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#22c55e] font-mono"
               />
             </div>
 
@@ -214,10 +249,10 @@ export default function AdminPage() {
               type="submit"
               className="w-full py-3.5 px-4 rounded-xl font-black text-sm text-[#04160b] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:brightness-110 uppercase tracking-wider transition shadow-[0_4px_20px_rgba(34,197,94,0.4)]"
             >
-              Liberar Acesso
+              Acessar Painel Admin
             </button>
 
-            <div className="pt-2">
+            <div className="pt-2 text-center">
               <Link href="/" className="text-xs text-[#8fae9e] hover:text-white transition">
                 ← Voltar para a página inicial
               </Link>
