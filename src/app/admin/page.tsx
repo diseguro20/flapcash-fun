@@ -498,11 +498,18 @@ export default function AdminPage() {
                         {moneyFormat.format(u.balance || 0)}
                       </td>
                       <td className="py-3.5 px-3">
-                        <span className={`px-2 py-0.5 rounded-full font-black text-[10px] uppercase ${
-                          u.role === 'admin' ? 'bg-[#f7c948]/20 text-[#f7c948]' : 'bg-white/10 text-[#cfe6d8]'
-                        }`}>
-                          {u.role === 'admin' ? 'ADMIN' : 'JOGADOR'}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-full font-black text-[10px] uppercase ${
+                            u.role === 'admin' ? 'bg-[#f7c948]/20 text-[#f7c948]' : 'bg-white/10 text-[#cfe6d8]'
+                          }`}>
+                            {u.role === 'admin' ? 'ADMIN' : 'JOGADOR'}
+                          </span>
+                          {u.isInfluencer && (
+                            <span className="px-2 py-0.5 rounded-full font-black text-[10px] uppercase bg-[#f7c948]/25 text-[#f7c948] border border-[#f7c948]/40">
+                              🌟 INFLUENCER
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-3">
                         <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
@@ -984,6 +991,20 @@ export default function AdminPage() {
             </div>
 
             <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl border border-white/5">
+                <div>
+                  <span className="text-xs font-bold text-white block">Ativar Modo Influenciador</span>
+                  <span className="text-[10px] text-[#8fae9e]">Habilita comissões e HUD VIP no perfil do jogador</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInfluencerEnabled(!influencerEnabled)}
+                  className={`w-12 h-6 rounded-full transition-colors p-1 flex items-center ${influencerEnabled ? 'bg-[#22c55e] justify-end' : 'bg-white/20 justify-start'}`}
+                >
+                  <div className="w-4 h-4 rounded-full bg-white shadow-md" />
+                </button>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-[#8fae9e] uppercase mb-1">
                   Código de Indicação (Ref)

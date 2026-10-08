@@ -249,14 +249,25 @@
 (function() {
   var urlParams = new URLSearchParams(window.location.search);
   var isDemoParam = urlParams.get('demo');
+  var uidParam = urlParams.get('uid');
+  var balanceParam = urlParams.get('balance');
+
   var userSession = null;
   try {
     var raw = localStorage.getItem('flapcash_user_session');
     if (raw) userSession = JSON.parse(raw);
   } catch(e) {}
 
-  var isDemo = (isDemoParam === 'true') || (!userSession);
-  var balance = userSession && typeof userSession.balance === 'number' ? userSession.balance : 0;
+  var uid = uidParam || (userSession ? userSession.uid : null);
+  var isDemo = (isDemoParam === 'true') || (!uid);
+  
+  var balance = 0;
+  if (userSession && typeof userSession.balance === 'number') {
+    balance = userSession.balance;
+  }
+  if (balanceParam !== null && balanceParam !== undefined && balanceParam !== '') {
+    balance = parseFloat(balanceParam) || balance;
+  }
 
   window.GAME = {
     demo: isDemo,
@@ -288,7 +299,7 @@
       mascot: "/assets/mascote-padrao.png"
     },
     balance: balance,
-    user_id: userSession ? userSession.uid : null,
+    user_id: uid,
     brand: "flapcash",
     api: "/api/round/",
     home: "/"

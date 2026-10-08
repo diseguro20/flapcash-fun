@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, getDocs, collection } from 'firebase/firestore';
 
 export async function POST(req: Request) {
   try {
@@ -10,28 +10,46 @@ export async function POST(req: Request) {
     const bet = Number(bet_amount) || 5;
     const uid = user_id || 'usr_demo_player';
 
-    // Recupera usuário do Firestore ou sessão local
+    // Recupera usuário do Firestore por ID, email ou username
+    let userRef = doc(db, 'users', uid);
     let currentBalance = 0.00;
+
     try {
-      const userRef = doc(db, 'users', uid);
-      const snap = await getDoc(userRef);
-      if (snap.exists()) {
-        currentBalance = snap.data().balance ?? 0.00;
+      let snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        const snapAll = await getDocs(collection(db, 'users'));
+        const match = snapAll.docs.find(d => {
+          const dt = d.data();
+          const dEmail = (dt.email || '').toLowerCase();
+          const dUser = (dt.username || '').toLowerCase();
+          const norm = uid.toLowerCase();
+          return d.id === uid || dEmail === norm || dUser === norm;
+        });
+        if (match) {
+          userRef = doc(db, 'users', match.id);
+          snap = match;
+        }
+      }
+
+      if (snap && snap.exists()) {
+        const dt = snap.data();
+        currentBalance = Number(dt.balance ?? dt.cash_balance ?? 0.00);
       } else {
         await setDoc(userRef, {
           uid,
           name: 'Jogador FlapCash',
           balance: 0.00,
-          bonusBalance: 0,
+          cash_balance: 0.00,
+          bonus_balance: 0.00,
           createdAt: new Date().toISOString()
         });
       }
     } catch (e) {
-      console.warn('Firestore fallback balance:', e);
+      console.warn('Firestore user fetch:', e);
     }
 
     if (currentBalance < bet) {
-      return NextResponse.json({ error: 'saldo_insuficiente' }, { status: 200 });
+      return NextResponse.json({ error: 'saldo_insuficiente', balance: currentBalance }, { status: 200 });
     }
 
     if (bet < 5 || bet > 1000) {
@@ -41,12 +59,15 @@ export async function POST(req: Request) {
     const newBalance = Number((currentBalance - bet).toFixed(2));
     const roundId = 'rnd_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-    // Registra rodada
+    // Registra rodada e debita saldo
     try {
-      await updateDoc(doc(db, 'users', uid), { balance: newBalance });
+      await updateDoc(userRef, {
+        balance: newBalance,
+        cash_balance: newBalance
+      });
       await setDoc(doc(db, 'rounds', roundId), {
         roundId,
-        userId: uid,
+        userId: userRef.id,
         betAmount: bet,
         status: 'active',
         units: 0,

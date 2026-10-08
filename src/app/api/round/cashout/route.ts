@@ -30,9 +30,12 @@ export async function POST(req: Request) {
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        const cur = userSnap.data().balance || 0;
+        const cur = Number(userSnap.data().balance ?? userSnap.data().cash_balance ?? 0);
         newBalance = Number((cur + payout).toFixed(2));
-        await updateDoc(userRef, { balance: newBalance });
+        await updateDoc(userRef, {
+          balance: newBalance,
+          cash_balance: newBalance
+        });
       }
 
       if (round_id) {

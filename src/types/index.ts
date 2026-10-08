@@ -12,6 +12,9 @@ export interface UserProfile {
   referredBy?: string;
   role?: 'admin' | 'player';
   status?: 'active' | 'suspended';
+  isInfluencer?: boolean;
+  affiliateRate?: number;
+  subAffiliateRate?: number;
   createdAt: string;
 }
 

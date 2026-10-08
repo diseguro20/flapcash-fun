@@ -7,6 +7,8 @@ import {
   doc, 
   setDoc, 
   getDoc, 
+  getDocs,
+  collection,
   updateDoc, 
   onSnapshot 
 } from 'firebase/firestore';
@@ -67,6 +69,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (cached) {
         const parsed = JSON.parse(cached);
         setUser(parsed);
+
+        // Sincroniza em segundo plano com a API para garantir saldo fresco do banco de dados
+        fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: parsed.uid, email: parsed.email })
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.ok && data?.user) {
+              setUser(data.user);
+              localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(data.user));
+            }
+          })
+          .catch(() => {});
       }
 
       const cachedBets = localStorage.getItem(LOCAL_STORAGE_BETS_KEY);
@@ -81,6 +98,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Ouvinte de mensagens enviadas pelo jogo (ex.: atualização de saldo ao vivo)
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'UPDATE_BALANCE' && typeof e.data.balance === 'number') {
+        setUser(prev => {
+          if (!prev) return null;
+          const updated = { ...prev, balance: e.data.balance };
+          localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updated));
+          return updated;
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Listen to Firestore updates if user logged in
   useEffect(() => {
     if (!user?.uid) return;
@@ -88,12 +121,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const unsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
         if (docSnap.exists()) {
-          const freshData = docSnap.data() as UserProfile;
+          const dt = docSnap.data();
+          const freshData: UserProfile = {
+            ...user,
+            name: dt.displayName || dt.username || dt.name || user.name,
+            email: dt.email || user.email,
+            balance: Number(dt.balance ?? dt.cash_balance ?? 0),
+            bonusBalance: Number(dt.bonus_balance ?? dt.bonusBalance ?? 0),
+            role: dt.role === 'super_admin' || dt.role === 'admin' ? 'admin' : (dt.role || user.role || 'player'),
+            status: dt.status || user.status || 'active',
+            isInfluencer: Boolean(dt.is_influencer === 1 || dt.is_influencer === true || dt.isInfluencer === true),
+            affiliateRate: dt.affiliate_rate ?? dt.affiliateRate ?? user.affiliateRate ?? 10,
+            subAffiliateRate: dt.sub_affiliate_rate ?? dt.subAffiliateRate ?? user.subAffiliateRate ?? 2,
+            referralCode: dt.ref_code || dt.refCode || dt.referralCode || user.referralCode
+          };
           setUser(freshData);
           localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(freshData));
         }
       }, (error) => {
-        console.warn('Firestore snapshot notice (operating in local-first mode):', error.message);
+        console.warn('Firestore snapshot notice:', error.message);
       });
 
       return () => unsub();
@@ -106,9 +152,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
     if (newUser) {
       localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newUser));
-      // Try save to Firestore
+      // Persiste no Firestore e via API
       try {
-        setDoc(doc(db, 'users', newUser.uid), newUser, { merge: true }).catch(() => {});
+        setDoc(doc(db, 'users', newUser.uid), {
+          ...newUser,
+          balance: newUser.balance,
+          cash_balance: newUser.balance,
+          is_influencer: newUser.isInfluencer ? 1 : 0,
+          ref_code: newUser.referralCode
+        }, { merge: true }).catch(() => {});
+
+        fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUser)
+        }).catch(() => {});
       } catch (e) {}
     } else {
       localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
@@ -117,19 +175,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, pass: string) => {
     try {
-      // Cria ou recupera conta local/firestore
       const normalized = email.trim().toLowerCase();
-      const uid = 'usr_' + btoa(normalized).replace(/=/g, '').substring(0, 16);
-      
       let existingProfile: UserProfile | null = null;
+
+      // 1. Tenta sincronizar via API que consulta diretamente o Firestore no servidor
       try {
-        const snap = await getDoc(doc(db, 'users', uid));
-        if (snap.exists()) {
-          existingProfile = snap.data() as UserProfile;
+        const res = await fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalized, username: normalized })
+        });
+        const resData = await res.json();
+        if (resData.ok && resData.user) {
+          saveUserSession(resData.user);
+          return { success: true };
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Sync API login notice:', e);
+      }
+
+      // 2. Fallback: Busca direta no Firestore do cliente
+      try {
+        const snapAll = await getDocs(collection(db, 'users'));
+        const match = snapAll.docs.find(d => {
+          const dt = d.data();
+          const dEmail = (dt.email || '').toLowerCase();
+          const dUser = (dt.username || '').toLowerCase();
+          const dPhone = (dt.phone || '').toLowerCase();
+          return d.id === normalized || dEmail === normalized || dUser === normalized || dPhone === normalized;
+        });
+
+        if (match) {
+          const dt = match.data();
+          const isAdmin = dt.role === 'super_admin' || dt.role === 'admin' || normalized.includes('diseguro') || normalized.startsWith('admin');
+          existingProfile = {
+            uid: match.id,
+            name: dt.displayName || dt.username || dt.name || (dt.email ? dt.email.split('@')[0] : 'Piloto FlapCash'),
+            email: dt.email || normalized,
+            phone: dt.phone || '',
+            cpf: dt.cpf || '',
+            balance: Number(dt.balance ?? dt.cash_balance ?? 0.00),
+            bonusBalance: Number(dt.bonus_balance ?? dt.bonusBalance ?? 0.00),
+            rolloverCurrent: Number(dt.rollover_remaining ?? dt.rolloverCurrent ?? 0),
+            rolloverTarget: Number(dt.rollover_target ?? dt.rolloverTarget ?? 0),
+            role: isAdmin ? 'admin' : 'player',
+            status: dt.status || 'active',
+            isInfluencer: Boolean(dt.is_influencer === 1 || dt.is_influencer === true || dt.isInfluencer === true),
+            affiliateRate: dt.affiliate_rate ?? dt.affiliateRate ?? 10,
+            subAffiliateRate: dt.sub_affiliate_rate ?? dt.subAffiliateRate ?? 2,
+            referralCode: dt.ref_code || dt.refCode || dt.referralCode || 'REF' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+            createdAt: dt.created_at ? (typeof dt.created_at.toDate === 'function' ? dt.created_at.toDate().toISOString() : String(dt.created_at)) : new Date().toISOString()
+          };
+        }
+      } catch (e) {
+        console.warn('Busca de usuário no Firestore:', e);
+      }
 
       if (!existingProfile) {
+        const uid = 'usr_' + btoa(normalized).replace(/=/g, '').substring(0, 16);
         const isAdmin = normalized.includes('diseguro') || normalized.startsWith('admin');
         existingProfile = {
           uid,
@@ -141,11 +244,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           rolloverTarget: 0,
           role: isAdmin ? 'admin' : 'player',
           status: 'active',
+          isInfluencer: false,
+          affiliateRate: 10,
+          subAffiliateRate: 2,
           referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
           createdAt: new Date().toISOString()
         };
-      } else if (normalized.includes('diseguro') || normalized.startsWith('admin')) {
-        existingProfile.role = 'admin';
       }
 
       saveUserSession(existingProfile);
@@ -158,6 +262,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: { name: string; email: string; phone?: string; cpf?: string; password?: string; ref?: string }) => {
     try {
       const normalized = data.email.trim().toLowerCase();
+      
+      // 1. Tenta criar e sincronizar via API no servidor
+      try {
+        const res = await fetch('/api/auth/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            email: normalized,
+            phone: data.phone,
+            cpf: data.cpf,
+            ref: data.ref
+          })
+        });
+        const resData = await res.json();
+        if (resData.ok && resData.user) {
+          saveUserSession(resData.user);
+          return { success: true };
+        }
+      } catch (e) {
+        console.warn('Sync API register notice:', e);
+      }
+
+      // 2. Fallback local com saldo 0.00
       const uid = 'usr_' + Math.random().toString(36).substring(2, 10);
       const isAdmin = normalized.includes('diseguro') || normalized.startsWith('admin');
       
@@ -173,6 +301,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         rolloverTarget: 0,
         role: isAdmin ? 'admin' : 'player',
         status: 'active',
+        isInfluencer: false,
+        affiliateRate: 10,
+        subAffiliateRate: 2,
         referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
         referredBy: data.ref,
         createdAt: new Date().toISOString()

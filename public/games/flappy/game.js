@@ -42,6 +42,11 @@ async function api(path, body, tries = 1) {
             localStorage.setItem('flapcash_user_session', JSON.stringify(sess));
           }
         } catch(e) {}
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'UPDATE_BALANCE', balance: res.balance }, '*');
+          }
+        } catch(e) {}
       }
       return res;
     } catch (e) { if (i === tries - 1) throw e; await new Promise(r => setTimeout(r, 700)); }
@@ -687,9 +692,29 @@ btnPlay.onclick = async () => {
   try {
     const d = await api('start', { bet_amount: bet });
     if (d.error) {
-      betErr.textContent = d.error === 'saldo_insuficiente' ? 'Saldo insuficiente.'
-                        : d.error === 'aposta_invalida' ? ('Aposta entre ' + fmt(d.min) + ' e ' + fmt(d.max))
-                        : 'Erro ao iniciar. Tenta de novo.';
+      if (d.error === 'saldo_insuficiente') {
+        if (typeof d.balance === 'number') {
+          balance = d.balance;
+          try {
+            const raw = localStorage.getItem('flapcash_user_session');
+            if (raw) {
+              const sess = JSON.parse(raw);
+              sess.balance = d.balance;
+              localStorage.setItem('flapcash_user_session', JSON.stringify(sess));
+            }
+          } catch(e) {}
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'UPDATE_BALANCE', balance: d.balance }, '*');
+            }
+          } catch(e) {}
+        }
+        betErr.textContent = 'Saldo insuficiente! Recarregue via PIX para jogar.';
+      } else if (d.error === 'aposta_invalida') {
+        betErr.textContent = 'Aposta entre ' + fmt(d.min) + ' e ' + fmt(d.max);
+      } else {
+        betErr.textContent = 'Erro ao iniciar. Tenta de novo.';
+      }
     } else {
       roundId = d.round_id; balance = Number(d.balance);
       resetWorld(); spawnPipes(); state = 'ready';   // cano já aparece na tela de "toque para voar"
@@ -826,6 +851,11 @@ btnSair.onclick = async e => {
       else await api('lose', { round_id: roundId, units });
     } catch (err) {}
   }
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'EXIT_GAME' }, '*');
+    }
+  } catch(e) {}
   location.href = G.home;
 };
 /* ícone do som em SVG branco (o emoji vinha colorido e destoava do HUD) */

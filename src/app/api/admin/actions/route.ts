@@ -21,10 +21,13 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
         }
 
-        const currentBalance = Number(userSnap.data().balance) || 0;
+        const currentBalance = Number(userSnap.data().balance ?? userSnap.data().cash_balance ?? 0);
         const newBalance = Math.max(0, Number((currentBalance + amount).toFixed(2)));
 
-        await updateDoc(userRef, { balance: newBalance });
+        await updateDoc(userRef, { 
+          balance: newBalance,
+          cash_balance: newBalance
+        });
 
         // Registra na trilha de auditoria
         await addDoc(collection(db, 'adminAudit'), {
@@ -80,10 +83,14 @@ export async function POST(req: Request) {
         }
 
         await updateDoc(doc(db, 'users', targetId), {
-          isInfluencer: value.enabled,
+          isInfluencer: Boolean(value.enabled),
+          is_influencer: value.enabled ? 1 : 0,
           refCode: value.refCode,
-          affiliateRate: value.rate1,
-          subAffiliateRate: value.rate2
+          ref_code: value.refCode,
+          affiliateRate: Number(value.rate1) || 10,
+          affiliate_rate: Number(value.rate1) || 10,
+          subAffiliateRate: Number(value.rate2) || 2,
+          sub_affiliate_rate: Number(value.rate2) || 2
         });
 
         await addDoc(collection(db, 'adminAudit'), {

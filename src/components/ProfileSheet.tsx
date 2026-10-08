@@ -85,6 +85,15 @@ export default function ProfileSheet() {
               <span className="text-[#22c55e] font-mono font-bold">{user?.referralCode}</span>
             </div>
 
+            {user?.isInfluencer && (
+              <div className="p-3.5 bg-gradient-to-r from-[#2a1c02] to-[#120d01] border border-[#f7c948]/50 rounded-xl flex justify-between items-center text-xs">
+                <span className="text-[#f7c948] font-black uppercase tracking-wider">Status de Parceria</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#f7c948]/20 text-[#f7c948] font-black border border-[#f7c948]/40 text-[11px]">
+                  🌟 INFLUENCER OFICIAL ({user?.affiliateRate || 10}%)
+                </span>
+              </div>
+            )}
+
             {(user?.role === 'admin' || user?.email?.toLowerCase().includes('diseguro')) && (
               <a
                 href="/admin"

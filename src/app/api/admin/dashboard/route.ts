@@ -18,7 +18,26 @@ export async function GET(req: Request) {
     let usersList: any[] = [];
     try {
       const snapUsers = await getDocs(collection(db, 'users'));
-      usersList = snapUsers.docs.map(d => ({ id: d.id, ...d.data() }));
+      usersList = snapUsers.docs.map(d => {
+        const dt = d.data();
+        return {
+          id: d.id,
+          uid: d.id,
+          name: dt.displayName || dt.username || dt.name || (dt.email ? dt.email.split('@')[0] : 'Jogador'),
+          email: dt.email || dt.username || '',
+          phone: dt.phone || '',
+          cpf: dt.cpf || '',
+          balance: Number(dt.balance ?? dt.cash_balance ?? 0),
+          bonusBalance: Number(dt.bonus_balance ?? dt.bonusBalance ?? 0),
+          role: dt.role === 'super_admin' || dt.role === 'admin' ? 'admin' : (dt.role || 'player'),
+          status: dt.status || 'active',
+          isInfluencer: Boolean(dt.is_influencer === 1 || dt.is_influencer === true || dt.isInfluencer === true),
+          refCode: dt.ref_code || dt.refCode || dt.referralCode || '',
+          affiliateRate: dt.affiliate_rate ?? dt.affiliateRate ?? 10,
+          subAffiliateRate: dt.sub_affiliate_rate ?? dt.subAffiliateRate ?? 2,
+          createdAt: dt.created_at ? (typeof dt.created_at.toDate === 'function' ? dt.created_at.toDate().toISOString() : String(dt.created_at)) : (dt.createdAt || new Date().toISOString())
+        };
+      });
     } catch (e) {
       console.warn('Erro ao listar users no admin:', e);
     }
