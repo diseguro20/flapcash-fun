@@ -38,6 +38,33 @@ export default function DepositSheet() {
     return () => clearInterval(interval);
   }, [pixData, isPaid]);
 
+  // Polling automático de status do webhook da Vizzion Pay
+  useEffect(() => {
+    if (!pixData || isPaid) return;
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/vizzionpay/status?txId=${pixData.transactionId}`);
+        const data = await res.json();
+        if (data.paid || data.status === 'COMPLETED') {
+          setIsPaid(true);
+          try {
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 }
+            });
+          } catch (e) {}
+          setTimeout(() => {
+            setIsDepositOpen(false);
+            setPixData(null);
+            setIsPaid(false);
+          }, 3000);
+        }
+      } catch (e) {}
+    }, 3000);
+    return () => clearInterval(pollInterval);
+  }, [pixData, isPaid]);
+
   const handleSelectQuick = (val: number) => {
     setAmount(val);
     setCustomAmount(val.toString());
