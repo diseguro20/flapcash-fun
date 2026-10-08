@@ -1,0 +1,169 @@
+﻿<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Entrar — flapcash</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation}
+ :root{--green:#22c55e;--greenD:#16a34a;--greenRGB:34,197,94;--yellow:#f7c948;--bg:#050d08;--panel:#0b1a11;--line:#16311f;--txt:#eaf5ee;--mut:#93b3a2}
+ body{font-family:'Montserrat',system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased;min-height:100vh}
+ a{text-decoration:none;color:inherit}
+ img{max-width:100%;display:block}
+ .nav{position:sticky;top:0;z-index:20;background:rgba(5,13,8,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(var(--greenRGB),.16)}
+ .nav .in{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+ .nav .brand{font-weight:900;color:var(--green);font-size:19px;display:flex}
+ .nav .home{color:var(--mut);font-weight:700;font-size:14px}
+ .wrap{max-width:1140px;margin:0 auto;padding:26px 18px 60px}
+ .flash{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fecaca;font-weight:700;font-size:14px;padding:13px 16px;border-radius:14px;margin-bottom:18px}
+ .flash.ok{background:rgba(var(--greenRGB),.12);border-color:rgba(var(--greenRGB),.4);color:#ffe4c4}
+
+ .grid{display:grid;grid-template-columns:1fr;gap:22px;align-items:start}
+ @media(min-width:980px){.grid{grid-template-columns:1.15fr .85fr;gap:30px}}
+
+ /* arte / banner */
+ .art>div{border-radius:20px;overflow:hidden}
+ .authban{display:block;width:100%;height:auto}
+ .fake{position:relative;background:radial-gradient(700px 380px at 30% 0%,rgba(var(--greenRGB),.28),transparent 62%),linear-gradient(160deg,var(--panel),var(--bg));
+   border:1px solid var(--line);border-radius:20px;padding:34px 26px 30px;text-align:center;overflow:hidden}
+ .fake::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1.3px,transparent 1.4px);background-size:22px 22px;opacity:.7}
+ .fake>*{position:relative}
+ .fmasc{width:150px;height:150px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;
+   background:radial-gradient(circle,rgba(var(--greenRGB),.3),transparent 70%);box-shadow:0 0 54px rgba(var(--greenRGB),.3)}
+ .fmasc svg,.fmasc img{width:112px;height:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,.5))}
+ .fmasc .mfruit img{width:74px}
+ .fmasc .mfruit img+img{margin-left:-13px}
+ .fh{font-size:clamp(28px,5.4vw,42px);font-weight:900;line-height:1;letter-spacing:-.01em}
+ .fh .y{color:var(--yellow)}
+ .fs{color:#c9e3d5;font-weight:600;margin-top:12px;font-size:15px}
+ .fchips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+ .fchips span{background:rgba(4,20,11,.6);border:1px solid rgba(var(--greenRGB),.3);border-radius:999px;padding:9px 14px;font-weight:800;font-size:12.5px;color:#cfe6d8}
+
+ /* cartão */
+ .box{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:20px}
+ .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:6px;margin-bottom:16px}
+ .tabs button{font-family:inherit;font-weight:800;font-size:14.5px;padding:12px 8px;border:0;border-radius:10px;background:transparent;color:var(--mut);cursor:pointer;transition:.15s}
+ .tabs button.on{background:rgba(255,255,255,.08);color:#fff}
+ form{display:none}form.on{display:block}
+ label{display:block;font-weight:800;font-size:12.5px;color:#b9d5c6;margin:12px 0 6px}
+ input{width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:13px;padding:15px 14px;color:var(--txt);font-family:inherit;font-weight:700;font-size:16px;transition:.15s}
+ input:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 4px rgba(var(--greenRGB),.12)}
+ input::placeholder{color:#5b7768}
+ .pw{position:relative}
+ .pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:8px 10px}
+ .forgot{display:block;text-align:right;color:var(--mut);font-weight:700;font-size:13px;margin-top:10px;text-decoration:underline}
+ .go{width:100%;margin-top:18px;background:var(--green);color:#04160b;font-family:inherit;font-weight:900;font-size:16px;letter-spacing:.02em;padding:17px;border:0;border-radius:14px;cursor:pointer;box-shadow:0 10px 26px rgba(var(--greenRGB),.35);transition:.15s}
+ .go:hover{background:var(--greenD);transform:translateY(-1px)}
+ .mini{color:var(--mut);font-weight:600;font-size:12.5px;margin-top:12px;text-align:center;line-height:1.5}
+ .trust{display:flex;justify-content:center;gap:22px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07)}
+ .trust div{text-align:center;color:var(--mut);font-weight:700;font-size:11px;line-height:1.35;max-width:88px}
+ .trust .i{display:block;width:20px;height:20px;color:var(--green);margin:0 auto 6px}
+ .pw button svg{width:20px;height:20px}
+
+ /* mobile: tudo cabe numa tela só (igual o concorrente) — arte enxuta,
+    campos e espaços mais justos, sem os selos repetidos no topo */
+ @media(max-width:979px){
+   .wrap{padding:14px 14px 36px}
+   .grid{gap:14px}
+   .fake{padding:20px 20px 16px}
+   .fmasc{width:88px;height:88px;margin:0 auto 10px}
+   .fmasc svg,.fmasc img{width:66px}
+   .fmasc .mfruit img{width:48px}
+   .fh{font-size:25px}
+   .fs{margin-top:8px;font-size:13.5px}
+   .fchips{display:none}
+   .box{padding:16px}
+   .tabs{margin-bottom:12px}
+   label{margin:10px 0 5px}
+   input{padding:13px 13px;font-size:16px}
+   .go{margin-top:14px;padding:15px}
+   .mini{margin-top:10px;font-size:11.5px}
+   .trust{margin-top:14px;padding-top:12px;gap:14px}
+ }
+</style></head><body>
+
+<nav class="nav"><div class="in">
+  <a class="brand" href="/">flapcash</a>
+  <a class="home" href="/">← início</a>
+</div></nav>
+
+<div class="wrap">
+    <div class="grid">
+
+    <div class="art">
+      <div id="art-entrar" >
+        <img class="authban" src="/assets/auth/flappy-login.jpg" alt="" fetchpriority="high">      </div>
+      <div id="art-cadastro" style="display:none">
+        <img class="authban" src="/assets/auth/flappy-cadastro.jpg" alt="" fetchpriority="high">      </div>
+    </div>
+
+    <div class="box">
+      <div class="tabs">
+        <button type="button" id="t-entrar" class="on" onclick="aba('entrar')">Entrar</button>
+        <button type="button" id="t-cadastro" class="" onclick="aba('cadastro')">Criar nova conta</button>
+      </div>
+
+      <form id="f-entrar" class="on" method="post" action="/?p=login">
+        <input type="hidden" name="csrf" value="fcf58e3219df324d73e03618e08dd9f6">
+        <label>E-mail ou telefone</label>
+        <input name="login" autocomplete="username" required>
+        <label>Senha</label>
+        <div class="pw"><input type="password" name="password" autocomplete="current-password" required>
+          <button type="button" onclick="olho(this)" aria-label="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button></div>
+        <a class="forgot" href="/?p=esqueci">Esqueci minha senha</a>
+        <button class="go">ENTRAR NA CONTA</button>
+      </form>
+
+      <form id="f-cadastro" class="" method="post" action="/?p=register">
+        <input type="hidden" name="csrf" value="fcf58e3219df324d73e03618e08dd9f6">
+        <label>Telefone</label>
+        <input name="phone" inputmode="tel" placeholder="(11) 99999-9999" required>
+        <label>E-mail</label>
+        <input type="email" name="email" autocomplete="email" required>
+        <label>Senha</label>
+        <div class="pw"><input type="password" name="password" autocomplete="new-password" minlength="6" required>
+          <button type="button" onclick="olho(this)" aria-label="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button></div>
+        <button class="go">CRIAR CONTA E JOGAR</button>
+        <div class="mini">Ao criar a conta você declara ter 18 anos ou mais e aceita os
+          <a href="/?p=termos" style="color:var(--green);font-weight:700">Termos de Uso</a>.</div>
+      </form>
+
+      <div class="trust">
+        <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Ambiente seguro</div>
+        <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Dados protegidos (LGPD)</div>
+        <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Saque via PIX</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function aba(q){
+  ['entrar','cadastro'].forEach(function(k){
+    document.getElementById('t-'+k).classList.toggle('on', k===q);
+    document.getElementById('f-'+k).classList.toggle('on', k===q);
+    document.getElementById('art-'+k).style.display = (k===q) ? '' : 'none';
+  });
+  history.replaceState(null,'','/?p=entrar' + (q==='cadastro' ? '&tab=cadastro' : ''));
+}
+function olho(b){ var i=b.parentNode.querySelector('input'); i.type = i.type==='password' ? 'text' : 'password'; }
+
+/* Máscara do telefone: aceita colar de qualquer jeito (com +55, parênteses,
+   espaços) e mostra sempre (11) 99999-9999. O +55 do autofill é descartado. */
+(function(){
+  var el = document.querySelector('#f-cadastro input[name=phone]');
+  if (!el) return;
+  function fmt(v){
+    var d = (v || '').replace(/\D/g,'');
+    if (d.length > 11 && d.slice(0,2) === '55') d = d.slice(2);   // tira código do país
+    d = d.slice(0,11);
+    if (d.length <= 2)  return d.length ? '(' + d : d;
+    if (d.length <= 6)  return '(' + d.slice(0,2) + ') ' + d.slice(2);
+    if (d.length <= 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+    return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+  }
+  el.addEventListener('input', function(){ el.value = fmt(el.value); });
+  el.addEventListener('paste', function(){ setTimeout(function(){ el.value = fmt(el.value); }, 0); });
+})();
+</script>
+</body></html>
+

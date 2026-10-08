@@ -379,20 +379,21 @@ export default function HomePage() {
       {/* FOOTER */}
       <Footer onOpenDoc={(doc) => setCurrentDoc(doc)} />
 
-      {/* DEMO GAME MODAL */}
+      {/* DEMO GAME MODAL - JOGO 100% ORIGINAL */}
       {demoModalOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-md">
-            <button
-              onClick={() => setDemoModalOpen(false)}
-              className="absolute -top-11 right-0 text-white/80 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <FlappyBirdGame
-              betAmount={10}
-              isDemo={true}
-              onClose={() => setDemoModalOpen(false)}
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
+          <button
+            onClick={() => setDemoModalOpen(false)}
+            className="absolute top-4 right-4 z-[160] text-white/80 hover:text-white p-2.5 rounded-full bg-black/60 border border-white/20 transition"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="w-full h-full max-w-[480px] max-h-[100dvh] relative">
+            <iframe
+              src="/game/index.html?demo=true"
+              className="w-full h-full border-0 rounded-none sm:rounded-2xl shadow-2xl"
+              allow="autoplay"
+              title="FlapCash Original Game"
             />
           </div>
         </div>

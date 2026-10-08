@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>flapcash — Jogar</title>
+<link rel="preload" as="image" fetchpriority="high" href="/assets/mascote-padrao.png">
+<style>
+ @font-face{font-family:Montserrat;src:url('/assets/fonts/montserrat-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{height:100%;overscroll-behavior:none}
+ body{background:#05130c;font-family:'Montserrat',system-ui,sans-serif;color:#fff;display:flex;justify-content:center}
+ #stage{position:relative;width:100%;max-width:480px;height:100dvh;overflow:hidden;background:#69b7d8}
+ #cv{display:block;width:100%;height:100%;touch-action:none}
+ /* Layout de toque mantém a proporção vertical; mouse/teclado usam as regras abaixo. */
+ @media(min-width:600px){
+   body{align-items:center;background:#05100a radial-gradient(900px 600px at 50% 0%,rgba(34,197,94,.10),transparent 70%)}
+   /* altura máxima da tela; largura sai do 9:16 (e nunca passa da janela) */
+   #stage{height:min(100dvh,calc(100vw * 16 / 9));width:auto;max-width:100vw;aspect-ratio:9/16;
+          border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(34,197,94,.18)}
+ }
+
+ /* ------- HUD ------- */
+ #hud{position:absolute;inset:0;pointer-events:none;z-index:5}
+ .hud-top{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 12px;gap:8px}
+ /* cada canto é uma pastilha de vidro: o número nunca some no céu claro */
+ /* enxutos de propósito: o espaço que sobra é do acumulado no meio */
+ .hud-col{flex:0 0 auto;min-width:82px;background:rgba(4,14,9,.52);border:1px solid rgba(255,255,255,.16);border-radius:14px;
+   padding:8px 10px 9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+ .hud-col .lbl{font-size:9.5px;font-weight:900;letter-spacing:.14em;color:rgba(255,255,255,.6);text-transform:uppercase}
+ .hud-col .val{font-size:17px;font-weight:900;color:#fff;line-height:1.15;letter-spacing:-.02em;
+   font-variant-numeric:tabular-nums;text-shadow:0 2px 5px rgba(0,0,0,.5)}
+ .hud-col .sub{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#7ee29b;margin-top:3px}
+ .hud-col.right{text-align:right}
+ .hud-col.right .val{color:#ffd54a}
+ /* meta batida: texto curto e menor, senão o card cresce e empurra o valor do meio */
+ .hud-col.right .val.ok{font-size:12.5px;color:#7ee29b;letter-spacing:.08em;padding:4px 0 3px;white-space:nowrap}
+ /* flex:0 0 auto: sem isso o lado direito encolhe e quebra o "LIBERADO ✓" em 2 linhas */
+ .hud-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+ /* halo escuro atrás do acumulado: contraste sem virar caixa */
+ .hud-center{flex:1 1 auto;min-width:0;overflow:hidden;text-align:center;padding:10px 6px 10px;border-radius:18px;
+   background:radial-gradient(120% 135% at 50% 0%,rgba(4,14,9,.6),rgba(4,14,9,0) 76%)}
+ /* o número encolhe pra caber (ajuste no JS): valor grande não invade os cantos */
+ /* sem max-width de propósito: o JS precisa medir a largura REAL do texto pra encolher */
+ #hud-win{display:inline-block;font-size:34px;font-weight:900;color:#5ec8ff;letter-spacing:-.03em;
+   line-height:1.05;white-space:nowrap;font-variant-numeric:tabular-nums;
+   text-shadow:0 2px 0 rgba(3,20,38,.6),0 0 16px rgba(56,189,248,.45),0 4px 16px rgba(0,0,0,.65)}
+ #hud-barwrap{width:100%;max-width:186px;height:11px;border-radius:99px;background:rgba(3,12,7,.6);
+   border:1px solid rgba(255,255,255,.2);margin:9px auto 0;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+ #hud-bar{display:block;width:0%;height:100%;border-radius:99px;
+   background:linear-gradient(90deg,#0ea5e9,#38bdf8 60%,#7dd3fc);transition:width .25s;box-shadow:0 0 12px rgba(56,189,248,.85)}
+ #btn-sair{pointer-events:auto;background:rgba(4,14,9,.52);border:1px solid rgba(255,255,255,.16);color:#fff;
+   font-family:inherit;font-weight:800;font-size:13px;padding:8px 18px;border-radius:11px;cursor:pointer;
+   backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+
+ /* resgate: laranja, redondo e grande — é o botão do dinheiro */
+ #btn-cash{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);bottom:104px;
+   display:none;flex-direction:row;align-items:center;justify-content:center;gap:9px;white-space:nowrap;
+   background:linear-gradient(180deg,#ffb04d,#f97316);color:#fff;border:2px solid rgba(255,255,255,.38);
+   border-radius:999px;font-family:inherit;font-weight:900;font-size:19px;letter-spacing:.01em;
+   padding:15px 38px;cursor:pointer;text-shadow:0 2px 4px rgba(124,45,0,.5);
+   box-shadow:0 14px 32px rgba(249,115,22,.55),inset 0 2px 0 rgba(255,255,255,.35);animation:cashpulse 1.2s infinite}
+ #btn-cash small{font-size:19px;font-weight:900;letter-spacing:0;font-variant-numeric:tabular-nums}
+ @keyframes cashpulse{50%{transform:translateX(-50%) scale(1.05)}}
+
+ #btn-sound{pointer-events:auto;position:absolute;right:14px;bottom:16px;width:46px;height:46px;border-radius:14px;
+   border:1px solid rgba(255,255,255,.16);background:rgba(4,14,9,.52);color:#fff;cursor:pointer;
+   display:flex;align-items:center;justify-content:center;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+ #btn-sound svg{width:22px;height:22px;fill:#fff}
+
+ /* espera do toque: só a chamada pulsando — o desfoque do cenário é feito no
+    canvas (game.js), pra não borrar o pássaro junto */
+ #msg-tap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+   pointer-events:none;z-index:4;text-align:center}
+ #msg-tap .box{animation:tappulse 1.7s ease-in-out infinite;padding:0 18px}
+ #msg-tap .t1{font-size:36px;font-weight:900;color:#4ade80;text-shadow:2px 2px 0 #14532d,0 6px 18px rgba(0,0,0,.6)}
+ #msg-tap .t2{font-size:13.5px;font-weight:800;color:#eaf5ee;text-shadow:0 2px 6px rgba(0,0,0,.8);margin-top:7px}
+ @keyframes tappulse{50%{transform:scale(1.06)}}
+
+ /* celular estreito: cantos mais apertados pra o acumulado do meio não encolher demais */
+ @media(max-width:380px){
+   .hud-top{padding:12px 10px;gap:6px}
+   .hud-col{min-width:74px;padding:7px 8px 8px}
+   .hud-col .lbl{font-size:9px;letter-spacing:.1em}
+   .hud-col .val{font-size:15.5px}
+ }
+ @media(prefers-reduced-motion:reduce){#msg-tap .box,#btn-cash{animation:none}}
+
+ /* ------- overlays ------- */
+ .ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(3,12,7,.72);backdrop-filter:blur(3px);z-index:10;padding:20px}
+ .ov.hidden{display:none}
+ .panel{width:100%;max-width:330px;background:linear-gradient(180deg,#0e2417,#081a10);border:1.5px solid rgba(34,197,94,.55);border-radius:18px;padding:24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+ .panel h2{font-size:18px;font-weight:900}
+ .panel .big{font-size:42px;font-weight:900;color:#f7c948;margin:10px 0;text-shadow:0 3px 10px rgba(0,0,0,.4)}
+ .panel .mut{color:#9fbcab;font-weight:700;font-size:13px}
+ .panel .err{color:#fca5a5;font-weight:800;font-size:13px;min-height:18px;margin-top:8px}
+ .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0 4px}
+ .chip{background:#0a1f13;border:1.5px solid #1e3d2a;color:#eaf5ee;font-family:inherit;font-weight:900;font-size:14px;padding:10px 0;width:64px;border-radius:11px;cursor:pointer}
+ .chip.sel{background:#22c55e;border-color:#22c55e;color:#06290f}
+ .stepper{display:flex;align-items:center;gap:10px;justify-content:center;margin:16px 0 8px}
+ .step-btn{width:48px;height:48px;border-radius:12px;border:1.5px solid #1e3d2a;background:#0a1f13;color:#eaf5ee;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit}
+ .step-btn:active{background:#123322}
+ .step-val{min-width:132px;padding:11px 8px;background:#06170d;border:1.5px solid #2a5d3c;border-radius:12px;font-size:22px;font-weight:900;color:#f7c948;text-align:center}
+ .mut.small{font-size:11px;margin-top:4px}
+ .betmeta{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:12px;font-size:13px;font-weight:800;color:#cfe6d8;flex-wrap:wrap}
+ .meta-pill{background:rgba(247,201,72,.12);border:1px solid rgba(247,201,72,.55);color:#f7c948;border-radius:99px;padding:4px 12px}
+ .row2{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:14px;align-items:stretch}
+ .row2 .btn-big,.row2 .btn-ghost{margin-top:0}
+ #btn-cash.locked{background:rgba(0,0,0,.6);color:#9fbcab;animation:none;box-shadow:none;border:1.5px solid #1e3d2a}
+ .btn-big{display:block;width:100%;margin-top:16px;background:linear-gradient(90deg,#22c55e,#d9f36b);color:#06290f;border:0;border-radius:13px;font-family:inherit;font-weight:900;font-size:17px;padding:15px;cursor:pointer;box-shadow:0 10px 26px rgba(34,197,94,.4)}
+ .btn-big:disabled{opacity:.5;cursor:not-allowed}
+ .btn-ghost{display:block;width:100%;margin-top:10px;background:transparent;border:1.5px solid #1e3d2a;color:#cfe6d8;border-radius:13px;font-family:inherit;font-weight:800;font-size:14px;padding:12px;cursor:pointer;text-decoration:none}
+ .panel .tagr{display:inline-block;background:rgba(247,201,72,.12);border:1px solid rgba(247,201,72,.5);color:#f7c948;
+   font-weight:900;font-size:11px;letter-spacing:.12em;padding:7px 14px;border-radius:999px;margin-bottom:14px}
+ .panel h2.tit{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px}
+ .panel .money{margin-top:6px;color:#7f9c8c;font-size:12px}
+ .panel .volta{display:block;margin-top:12px;color:#7f9c8c;font-weight:700;font-size:13px;text-decoration:none}
+ .panel .volta:hover{color:#cfe6d8}
+ .panel.lose{border-color:rgba(239,68,68,.55)}
+ .panel.lose .big{color:#f87171}
+ .mult-badge{display:inline-block;background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.5);color:#4ade80;font-weight:900;font-size:14px;border-radius:99px;padding:5px 14px;margin-bottom:4px}
+ /* Mouse/keyboard layout: the sky fills the viewport with proportional artwork. */
+ #desktop-controls{display:none}
+ @media(hover:hover) and (pointer:fine){
+   #cv:focus-visible{outline:2px solid #b9f5c8;outline-offset:-4px}
+   html,body{overflow:hidden}
+   body #stage{width:100%;max-width:none;height:100dvh;aspect-ratio:auto;border-radius:0;box-shadow:none}
+   #cv{cursor:pointer}
+   #desktop-controls{display:flex;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);align-items:center;justify-content:center;gap:7px;max-width:calc(100% - 420px);padding:10px 16px;border-radius:12px;background:rgba(4,25,14,.82);color:#eaf5ee;font-size:11px;line-height:1.5;text-align:center;pointer-events:none}
+   #desktop-controls kbd{font:800 10px/1.5 Montserrat,sans-serif;padding:2px 6px;border:1px solid rgba(185,245,200,.35);border-radius:4px;white-space:nowrap}
+   #stage.can-cashout #desktop-controls{display:none}
+   #btn-cash{bottom:32px;max-width:calc(100% - 48px)}
+   #msg-tap .box{padding:26px 36px;max-width:520px;border-radius:24px;background:radial-gradient(ellipse,rgba(4,25,14,.52),rgba(4,25,14,0) 72%)}
+   #msg-tap .t1{font-size:clamp(30px,3.2vw,46px);text-wrap:balance;color:#8beca6}
+   #msg-tap .t2{font-size:14px;line-height:1.6;text-wrap:balance}
+   .ov{overflow:auto;overscroll-behavior:contain;padding:24px}
+   .panel{max-width:380px;max-height:100%;overflow:auto;padding:30px}
+   .panel h2{font-size:22px}.panel .big{font-size:46px}
+   #stage :is(button,a):focus-visible{outline:3px solid #b9f5c8;outline-offset:4px}
+   #stage button{touch-action:manipulation}
+   #btn-sair{min-height:44px;min-width:80px}
+ }
+ @media(min-width:900px) and (hover:hover) and (pointer:fine){
+   .hud-top{padding:28px 32px;gap:24px}
+   .hud-col{min-width:132px;padding:12px 16px 13px;border-radius:16px;backdrop-filter:none;-webkit-backdrop-filter:none}
+   .hud-col .lbl{font-size:10px;margin-bottom:5px}.hud-col .val{font-size:23px}.hud-col .sub{font-size:10px;margin-top:5px}
+   .hud-col.right .val.ok{font-size:14px}
+   .hud-center{position:absolute;left:50%;top:24px;transform:translateX(-50%);width:340px;flex:none;padding:16px 12px}
+   #hud-barwrap{max-width:220px;margin-top:13px;height:11px}
+   .hud-right{gap:12px}
+   #btn-sound{right:32px;bottom:28px;width:54px;height:54px}#btn-sound svg{width:24px;height:24px}
+   #btn-cash{min-height:62px;min-width:300px;padding:17px 38px}
+ }
+ @media(max-width:899px) and (hover:hover) and (pointer:fine){
+   #desktop-controls{display:none}#btn-cash{bottom:84px}.panel{padding:24px;max-width:350px}
+ }
+ @media(max-height:560px) and (hover:hover) and (pointer:fine){
+   .hud-top{padding:14px 20px}.hud-center{top:10px}
+   #msg-tap .t1{font-size:28px}#msg-tap .box{padding:12px 24px}
+   #btn-sound{bottom:16px;right:20px}
+   #desktop-controls{bottom:20px}#btn-cash{bottom:24px}
+ }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv" tabindex="0" aria-label="flapcash. Clique, toque ou pressione Espaço ou seta para cima para voar."></canvas>
+
+  <div id="hud">
+    <div class="hud-top">
+      <div class="hud-col">
+        <div class="lbl">Aposta</div>
+        <div class="val" id="hud-bet">—</div>
+        <div class="sub" id="hud-saldo"></div>
+      </div>
+      <div class="hud-center">
+        <div id="hud-win">R$ 0,00</div>
+        <div id="hud-barwrap"><i id="hud-bar"></i></div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-col right">
+          <div class="lbl">Meta</div>
+          <div class="val" id="hud-meta">—</div>
+        </div>
+        <button id="btn-sair">Sair</button>
+      </div>
+    </div>
+    <button id="btn-cash"><span>RESGATAR</span><small id="cash-val">R$ 0,00</small></button>
+    <button id="btn-sound" aria-label="Som"></button>
+    <div id="desktop-controls">Clique para voar <span>ou use</span> <kbd>Espaço</kbd> <kbd>↑</kbd></div>
+  </div>
+
+  <div id="msg-tap"><div class="box">
+    <div class="t1">Toque para voar</div>
+    <div class="t2">Toque na tela para bater as asas</div>
+  </div></div>
+
+  <!-- escolher aposta -->
+  <div class="ov hidden" id="ov-bet">
+    <div class="panel">
+      <h2>Escolha sua aposta</h2>
+      <div class="mut">Cada cano passado soma no acumulado da rodada.</div>
+      <div class="stepper">
+        <button class="step-btn" id="bet-minus">−</button>
+        <div class="step-val" id="bet-val">5,00</div>
+        <button class="step-btn" id="bet-plus">＋</button>
+      </div>
+      <div class="mut small" id="bet-limits"></div>
+      <div class="chips" id="chips"></div>
+      <div class="betmeta">
+        <span>Aposta: <b id="bet-show">—</b></span>
+        <span class="meta-pill">Meta: <b id="meta-show">—</b></span>
+      </div>
+      <div class="mut small" id="bet-saldo"></div>
+      <div class="err" id="bet-err"></div>
+      <div class="row2">
+        <a class="btn-ghost" href="/">Cancelar</a>
+        <button class="btn-big" id="btn-play">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ganhou -->
+  <div class="ov hidden" id="ov-win">
+    <div class="panel">
+      <div class="mult-badge" id="win-mult">x0</div>
+      <h2 id="win-title">Você garantiu:</h2>
+      <div class="big" id="win-val">+R$ 0,00</div>
+      <div class="mut" id="win-sub"></div>
+      <button class="btn-big" id="btn-again-w">JOGAR DE NOVO</button>
+      <a class="btn-ghost" id="win-home" href="/">Início</a>
+    </div>
+  </div>
+
+  <!-- perdeu -->
+  <div class="ov hidden" id="ov-dead">
+    <div class="panel lose">
+      <span class="tagr">FIM DA RODADA</span>
+      <h2 class="tit">O passarinho caiu</h2>
+      <div class="mut" id="dead-sub"></div>
+      <div class="mut money" id="dead-val"></div>
+      <button class="btn-big" id="btn-again-d">Jogar novamente</button>
+      <a class="volta" href="/">Voltar ao início</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var isDemoParam = urlParams.get('demo');
+  var userSession = null;
+  try {
+    var raw = localStorage.getItem('flapcash_user_session');
+    if (raw) userSession = JSON.parse(raw);
+  } catch(e) {}
+
+  var isDemo = (isDemoParam === 'true') || (!userSession);
+  var balance = userSession && typeof userSession.balance === 'number' ? userSession.balance : 0;
+
+  window.GAME = {
+    demo: isDemo,
+    cfg: {
+      unit_label: "canos",
+      default_bet: 5,
+      min_bet: 5,
+      max_bet: 500,
+      bet_step: 5,
+      earn_rate: 1,
+      meta_mult: 7,
+      max_win: 10000,
+      earn_start: 1,
+      easy_pipes: 0,
+      profile: "teste",
+      facil: true,
+      preset: isDemo ? "demo" : "padrao",
+      phys: {
+        speed0: 133,
+        speedMax: 165,
+        accel: 0.28,
+        gap0: 239,
+        gapMin: 157,
+        taper: 2.16,
+        spacing: 234,
+        hvar: 104
+      },
+      sounds: { bg: "", flap: "", score: "", hit: "" },
+      mascot: "/assets/mascote-padrao.png"
+    },
+    balance: balance,
+    brand: "flapcash",
+    api: "/api/round/",
+    home: "/"
+  };
+})();
+</script>
+<script src="/games/audio-unlock.js"></script>
+<script src="/games/flappy/game.js"></script>
+</body>
+</html>
+

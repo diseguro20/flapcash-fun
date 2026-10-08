@@ -153,10 +153,16 @@ export default function DepositSheet() {
 
         <button
           onClick={() => { setIsDepositOpen(false); setPixData(null); }}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition"
+          className="absolute top-5 right-5 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/5 transition z-10"
         >
           <X className="w-5 h-5" />
         </button>
+
+        <img 
+          src="/assets/deposit/flappy.jpg" 
+          alt="Depósito FlapCash" 
+          className="w-full h-auto rounded-2xl mb-4 border border-[#22c55e]/20" 
+        />
 
         <div className="text-center mb-5">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#22c55e]/15 border border-[#22c55e]/30 text-[#22c55e] text-xs font-black tracking-wider uppercase mb-2">

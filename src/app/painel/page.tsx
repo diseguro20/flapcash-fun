@@ -270,11 +270,15 @@ export default function PainelPage() {
                 </span>
               </div>
 
-              {/* The Game Canvas Component */}
-              <FlappyBirdGame
-                betAmount={selectedBet}
-                isDemo={isDemoMode}
-              />
+              {/* O Jogo 100% Original */}
+              <div className="w-full h-[580px] rounded-2xl overflow-hidden bg-[#05130c] relative">
+                <iframe
+                  src={`/game/index.html${isDemoMode ? '?demo=true' : '?demo=false'}`}
+                  className="w-full h-full border-0 block"
+                  allow="autoplay"
+                  title="FlapCash Original Game"
+                />
+              </div>
             </div>
           </div>
 

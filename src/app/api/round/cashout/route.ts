@@ -1,0 +1,60 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { round_id, units } = body;
+
+    let bet = 5;
+    let userId = 'usr_demo_player';
+
+    if (round_id) {
+      try {
+        const roundSnap = await getDoc(doc(db, 'rounds', round_id));
+        if (roundSnap.exists()) {
+          bet = roundSnap.data().betAmount || 5;
+          userId = roundSnap.data().userId || 'usr_demo_player';
+        }
+      } catch (e) {}
+    }
+
+    const cleared = Number(units) || 7;
+    // Multiplicador progressivo oficial
+    const multiplier = Number((cleared >= 7 ? cleared * 1.0 : 7.0).toFixed(2));
+    const payout = Number((bet * multiplier).toFixed(2));
+
+    let newBalance = 50.00;
+    try {
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const cur = userSnap.data().balance || 0;
+        newBalance = Number((cur + payout).toFixed(2));
+        await updateDoc(userRef, { balance: newBalance });
+      }
+
+      if (round_id) {
+        await updateDoc(doc(db, 'rounds', round_id), {
+          status: 'won',
+          units: cleared,
+          payout,
+          multiplier,
+          closedAt: new Date().toISOString()
+        });
+      }
+    } catch (e) {}
+
+    return NextResponse.json({
+      ok: true,
+      payout,
+      multiplier,
+      units: cleared,
+      balance: newBalance
+    });
+  } catch (err: any) {
+    console.error('Error in round/cashout:', err);
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
+}
