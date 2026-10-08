@@ -1,0 +1,304 @@
+<html lang="pt-BR"><head><style>body {transition: opacity ease-in 0.2s; } 
+body[unresolved] {opacity: 0; display: block; overflow: hidden; position: relative; } 
+</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Recuperar senha — flapcash</title>
+<meta name="robots" content="index,follow">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation}
+ :root{--green:#22c55e;--yellow:#f7c948;--bg:#050d08;--txt:#eaf5ee;--mut:#93b3a2}
+ body{font-family:'Montserrat',system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+ a{color:var(--green);text-decoration:none;font-weight:700}
+ .nav{position:sticky;top:0;z-index:20;background:rgba(5,13,8,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(var(--greenRGB),.16)}
+ .nav .in{max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+ .nav .brand{font-weight:900;color:var(--green);font-size:18px;display:flex}
+ .wrap{max-width:820px;margin:0 auto;padding:34px 18px 70px}
+ h1{font-size:clamp(26px,6vw,38px);font-weight:900;letter-spacing:-.01em}
+ .up{color:var(--mut);font-weight:700;font-size:13px;margin-top:8px}
+ .bl{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid #16311f;border-radius:16px;padding:20px;margin-top:16px}
+ .bl h2{font-size:17px;font-weight:800;color:#fff}
+ .bl p{color:#cfe3d7;font-weight:600;font-size:14.5px;line-height:1.65;margin-top:8px}
+ .back{display:inline-block;margin-top:26px;font-weight:800}
+</style><style data-site-cloner-inlined="true">
+body {transition: opacity ease-in 0.2s; } 
+body[unresolved] {opacity: 0; display: block; overflow: hidden; position: relative; } 
+
+
+
+ *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation}
+ :root{--green:#22c55e;--yellow:#f7c948;--bg:#050d08;--txt:#eaf5ee;--mut:#93b3a2}
+ body{font-family:'Montserrat',system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+ a{color:var(--green);text-decoration:none;font-weight:700}
+ .nav{position:sticky;top:0;z-index:20;background:rgba(5,13,8,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(var(--greenRGB),.16)}
+ .nav .in{max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+ .nav .brand{font-weight:900;color:var(--green);font-size:18px;display:flex}
+ .wrap{max-width:820px;margin:0 auto;padding:34px 18px 70px}
+ h1{font-size:clamp(26px,6vw,38px);font-weight:900;letter-spacing:-.01em}
+ .up{color:var(--mut);font-weight:700;font-size:13px;margin-top:8px}
+ .bl{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid #16311f;border-radius:16px;padding:20px;margin-top:16px}
+ .bl h2{font-size:17px;font-weight:800;color:#fff}
+ .bl p{color:#cfe3d7;font-weight:600;font-size:14.5px;line-height:1.65;margin-top:8px}
+ .back{display:inline-block;margin-top:26px;font-weight:800}
+
+
+/* Style from https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap */
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+</style></head><body>
+<nav class="nav"><div class="in">
+  <a class="brand" href="../index.html">flapcash</a>
+  <a href="/?p=entrar" style="font-weight:800">Entrar</a>
+</div></nav>
+<div class="wrap">
+  <h1>Recuperar senha</h1>
+  <div class="up">flapcash · atualizado em 08/10/2026</div>
+      <div class="bl"><h2>Como recuperar</h2><p>A troca de senha é feita pelo atendimento, pra garantir que quem pede é mesmo o dono da conta. Chame o suporte informando o e-mail (ou nome de usuário) cadastrado.</p></div>
+      <div class="bl"><h2>Fale com o suporte</h2><p>O canal de atendimento deste site ainda está sendo configurado. Tente novamente mais tarde.</p></div>
+      <div class="bl"><h2>O que o suporte NUNCA pede</h2><p>Nenhum atendente vai pedir sua senha, código do banco ou pagamento para “liberar” saldo. Desconfie de quem pedir.</p></div>
+    <a class="back" href="../index.html">← Voltar ao início</a>
+</div>
+
+
+        <script>
+          (function() {
+            document.addEventListener('DOMContentLoaded', function() {
+              // Bottom Navigation & Sheet controller
+              const navButtons = document.querySelectorAll('[data-nav]');
+              const sheets = {
+                'depositar': document.getElementById('sheet-deposit'),
+                'sacar': document.getElementById('sheet-withdraw'),
+                'indicar': document.getElementById('sheet-referral'),
+                'perfil': document.getElementById('sheet-profile')
+              };
+
+              navButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                  const target = btn.getAttribute('data-nav');
+                  if (target === 'jogar') {
+                    if (window.location.pathname.includes('painel')) {
+                      window.location.href = window.location.href.includes('/paginas/') ? 'jogar.html' : './paginas/jogar.html';
+                    }
+                    return;
+                  }
+                  Object.values(sheets).forEach(s => { if (s) { s.hidden = true; s.style.display = 'none'; } });
+                  const sheet = sheets[target];
+                  if (sheet) {
+                    sheet.hidden = false;
+                    sheet.style.display = 'flex';
+                  }
+                });
+              });
+
+              // Close buttons
+              document.querySelectorAll('[data-close], .sheet-close, .app-install-close, #replay-close-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const sheetOverlay = btn.closest('.sheet-overlay, .modal-overlay, .app-install-bar');
+                  if (sheetOverlay) {
+                    sheetOverlay.hidden = true;
+                    sheetOverlay.style.display = 'none';
+                  }
+                });
+              });
+
+              // CTA Play buttons
+              const ctaPlay = document.getElementById('cta-play') || document.getElementById('hero-play') || document.getElementById('play-cta');
+              if (ctaPlay) {
+                ctaPlay.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  if (!window.location.pathname.includes('painel') && !window.location.pathname.includes('jogar')) {
+                    window.location.href = window.location.href.includes('/paginas/') ? 'painel.html' : './paginas/painel.html';
+                  }
+                });
+              }
+            });
+          })();
+        </script>
+        
+
+    <div id="site-cloner-offline-nav" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999999;background:rgba(11,18,38,0.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(53,182,255,0.4);border-radius:999px;padding:6px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 12px 36px rgba(0,0,0,0.65);font-family:system-ui,sans-serif;font-size:13px;font-weight:700;">
+      <a href="../index.html" style="color:#eaf0ff;text-decoration:none;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.06);transition:background .2s;">🏠 Início</a>
+      <a href="painel.html" style="color:#24e07a;text-decoration:none;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(36,224,122,0.12);transition:background .2s;">🎮 Painel</a>
+      <a href="jogar.html" style="color:#35b6ff;text-decoration:none;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(53,182,255,0.12);transition:background .2s;">🕹️ Jogo</a>
+    </div>
+    
+</body></html>

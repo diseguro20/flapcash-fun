@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap');
+
+:root {
+  --green: #22c55e;
+  --greenD: #16a34a;
+  --greenRGB: 34, 197, 94;
+  --yellow: #f7c948;
+  --bg: #050d08;
+  --panel: #0b1a11;
+  --txt: #eaf5ee;
+  --mut: #8fae9e;
+  --line: rgba(var(--greenRGB), 0.16);
+  --s1: rgba(255, 255, 255, 0.035);
+  --s2: rgba(255, 255, 255, 0.06);
+  --sh: 0 20px 48px -20px rgba(0, 0, 0, 0.9);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--txt);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--green);
+  color: #04160b;
+}
+
+/* Custom Sparks animation */
+.sparks {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sparks i {
+  position: absolute;
+  bottom: -12px;
+  border-radius: 50%;
+  background: var(--green);
+  opacity: 0;
+  animation: rise linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0) scale(0.7); opacity: 0; }
+  12% { opacity: 0.7; }
+  100% { transform: translateY(-78vh) scale(1.1); opacity: 0; }
+}
+
+@keyframes breathe {
+  50% { transform: scale(1.06); }
+}
+
+@keyframes voa {
+  0%, 100% { transform: translateY(0) rotate(-1.4deg); }
+  50% { transform: translateY(-11px) rotate(1.4deg); }
+}
+
+@keyframes ctapulse {
+  50% { transform: scale(1.045); box-shadow: 0 22px 52px -12px rgba(var(--greenRGB), 0.95); }
+}
+
+@keyframes ctahalo {
+  0% { opacity: 0.75; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.22); }
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
+
+/* Button variants matching original */
+.btn-g {
+  background: linear-gradient(180deg, var(--green), var(--greenD));
+  color: #04160b;
+  padding: 12px 26px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 8px 22px -10px rgba(var(--greenRGB), 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.18s ease;
+}
+
+.btn-g:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px -10px rgba(var(--greenRGB), 1);
+}
+
+.btn-o {
+  background: transparent;
+  color: var(--green);
+  border: 1.6px solid rgba(var(--greenRGB), 0.55);
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  transition: all 0.18s ease;
+}
+
+.btn-o:hover {
+  background: rgba(var(--greenRGB), 0.12);
+  border-color: var(--green);
+  color: #eafff1;
+  transform: translateY(-1px);
+}
