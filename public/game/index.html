@@ -251,6 +251,7 @@
   var isDemoParam = urlParams.get('demo');
   var uidParam = urlParams.get('uid');
   var balanceParam = urlParams.get('balance');
+  var influencerParam = urlParams.get('influencer');
 
   var userSession = null;
   try {
@@ -284,11 +285,11 @@
   var isEasy = isDemo || isInfluencer;
   
   var balance = 0;
-  if (userSession && typeof userSession.balance === 'number') {
-    balance = userSession.balance;
-  }
   if (balanceParam !== null && balanceParam !== undefined && balanceParam !== '') {
-    balance = parseFloat(balanceParam) || balance;
+    balance = parseFloat(balanceParam);
+    if (isNaN(balance)) balance = 0;
+  } else if (userSession && typeof userSession.balance === 'number') {
+    balance = userSession.balance;
   }
 
   // Configuração física precisa:

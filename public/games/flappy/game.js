@@ -650,10 +650,17 @@ function renderBet() {
   validateBet();
 }
 function validateBet() {
-  const err = (!DEMO && bet > balance) ? 'Saldo insuficiente.' : '';
-  betErr.textContent = err;
-  btnPlay.disabled = !!err;
-  return !err;
+  const needsDeposit = (!DEMO && bet > balance);
+  if (needsDeposit) {
+    betErr.textContent = 'Saldo insuficiente. Recarregue via PIX para jogar.';
+    btnPlay.textContent = 'DEPOSITAR PIX';
+    btnPlay.disabled = false;
+    return false;
+  }
+  betErr.textContent = '';
+  btnPlay.textContent = 'Confirmar';
+  btnPlay.disabled = false;
+  return true;
 }
 chipsBox.innerHTML = '';
 PRESETS.forEach(v => {
@@ -687,6 +694,15 @@ function showBetScreen() {
 
 /* ---------------- fluxo da rodada ---------------- */
 btnPlay.onclick = async () => {
+  if (!DEMO && bet > balance) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'OPEN_DEPOSIT' }, '*');
+      }
+    } catch(e) {}
+    location.href = '/?p=depositar';
+    return;
+  }
   if (!validateBet()) return;
   SND.init();
   if (DEMO) { startDemoRound(); return; }           // rodada de mentirinha, tudo local

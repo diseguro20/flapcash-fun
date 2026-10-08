@@ -64,6 +64,15 @@ export default function MemberDashboard() {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('p');
+      if (p === 'depositar') {
+        setIsDepositOpen(true);
+      }
+    }
+  }, [setIsDepositOpen]);
+
   const handlePlayNow = () => {
     if (balance < 5) {
       setIsDepositOpen(true);

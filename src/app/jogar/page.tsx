@@ -17,6 +17,8 @@ export default function JogarPage() {
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === 'EXIT_GAME') {
         router.push('/');
+      } else if (e.data?.type === 'OPEN_DEPOSIT') {
+        router.push('/?p=depositar');
       }
     };
     window.addEventListener('message', handleMessage);
