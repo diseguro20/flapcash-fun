@@ -12,6 +12,8 @@ const RATE  = Number(CFG.earn_rate) || .4;   // ganho por cano = aposta �? RAT
 const METAX = Number(CFG.meta_mult) || 7;    // meta = aposta �? METAX (libera o cashout)
 const STEP  = Number(CFG.bet_step)  || 5;
 const DEMO  = !!G.demo;                      // modo grátis: sem login, sem dinheiro, sem API
+const INFLUENCER = !DEMO && !!(G.influencer); // modo influencer: joga valendo dinheiro com facilidade da prévia
+const EASY_MODE = DEMO || INFLUENCER;
 const START = Math.max(1, Number(CFG.earn_start) || 1);   // começa a pagar neste cano
 const EASY  = Math.max(0, Number(CFG.easy_pipes) || 0);   // canos fáceis do começo
 
@@ -529,7 +531,7 @@ const HVAR     = Number(PH.hvar)     || 150;     // variação da altura da pass
    queda máxima acompanham, senão o pulinho não sustenta a altura. */
 const GRAV = 760, FLAP = -220, MAXFALL = 350;
 const BIRD_R = 22;                 // pássaro maior
-const HIT = BIRD_R - 5;                          // hitbox mais generosa que o desenho
+const HIT = EASY_MODE ? BIRD_R - 9 : BIRD_R - 5; // hitbox bem mais generosa para modo fácil/influencer
 
 let pipeIdx = 0;                                 // quantos canos já nasceram nesta rodada
 
@@ -776,7 +778,7 @@ async function doCashout() {
 }
 
 function finishLoss() {
-  if (DEMO) return;                             // no teste grátis quem encerra é o resgate
+  if (DEMO || INFLUENCER) return;                             // no teste grátis e modo influencer não morre
   if (state === 'dead') return;                 // não repete se o loop chamar de novo
   state = 'dead';
   const linha = () => 'Aposta -' + fmt(bet) + ' · saldo ' + fmt(balance);
@@ -820,8 +822,8 @@ function rewindDemo() {
   rewind = { p: 0, dur: .6, dist, y0: bird.y, y1: destino };
   state  = 'rewind';
   msgTap.style.display = 'flex';
-  msgTap.querySelector('.t1').textContent = '⏪ Voltando...';
-  msgTap.querySelector('.t2').textContent = 'segura essa, o teste continua';
+  msgTap.querySelector('.t1').textContent = INFLUENCER ? '✨ Quase!' : '⏪ Voltando...';
+  msgTap.querySelector('.t2').textContent = INFLUENCER ? 'Toque na tela para continuar' : 'segura essa, o teste continua';
   hud();
 }
 
@@ -833,8 +835,8 @@ function die() {
   for (let i = 0; i < 14; i++)
     feathers.push({ x: BIRD_X, y: bird.y, vx: -80 + Math.random() * 200, vy: -140 + Math.random() * 160, r: 2 + Math.random() * 3, a: 1, c: i % 2 ? '#ffd93d' : '#ffe9a8' });
 
-  // teste grátis: antes da meta o jogo não acaba, só retrocede
-  if (DEMO) {
+  // teste grátis ou modo influencer: antes da meta o jogo não acaba, só retrocede e dá segunda chance
+  if (DEMO || INFLUENCER) {
     resgateEmCurso = true;
     setTimeout(rewindDemo, 420);                       // deixa ver a batida antes de voltar
   }

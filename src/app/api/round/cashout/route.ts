@@ -20,9 +20,9 @@ export async function POST(req: Request) {
       } catch (e) {}
     }
 
-    const cleared = Number(units) || 7;
-    // Multiplicador progressivo oficial
-    const multiplier = Number((cleared >= 7 ? cleared * 1.0 : 7.0).toFixed(2));
+    const cleared = Math.max(1, Number(units) || 1);
+    // Multiplicador progressivo oficial por canos superados
+    const multiplier = Number(Math.max(1.5, cleared * 1.0).toFixed(2));
     const payout = Number((bet * multiplier).toFixed(2));
 
     let newBalance = payout;

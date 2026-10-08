@@ -260,6 +260,11 @@
 
   var uid = uidParam || (userSession ? userSession.uid : null);
   var isDemo = (isDemoParam === 'true') || (!uid);
+
+  var influencerParam = urlParams.get('influencer');
+  var isInfluencer = (influencerParam === 'true') || (userSession && (userSession.isInfluencer === true || userSession.is_influencer === 1));
+
+  var isEasy = isDemo || isInfluencer;
   
   var balance = 0;
   if (userSession && typeof userSession.balance === 'number') {
@@ -269,8 +274,29 @@
     balance = parseFloat(balanceParam) || balance;
   }
 
+  var physConfig = isEasy ? {
+    speed0: 118,
+    speedMax: 138,
+    accel: 0.08,
+    gap0: 255,
+    gapMin: 210,
+    taper: 0.2,
+    spacing: 260,
+    hvar: 55
+  } : {
+    speed0: 135,
+    speedMax: 175,
+    accel: 0.35,
+    gap0: 218,
+    gapMin: 155,
+    taper: 2.2,
+    spacing: 220,
+    hvar: 125
+  };
+
   window.GAME = {
     demo: isDemo,
+    influencer: isInfluencer,
     cfg: {
       unit_label: "canos",
       default_bet: 5,
@@ -278,23 +304,14 @@
       max_bet: 500,
       bet_step: 5,
       earn_rate: 1,
-      meta_mult: 7,
+      meta_mult: isEasy ? 2 : 7,
       max_win: 10000,
       earn_start: 1,
-      easy_pipes: 0,
-      profile: "teste",
-      facil: true,
-      preset: isDemo ? "demo" : "padrao",
-      phys: {
-        speed0: 133,
-        speedMax: 165,
-        accel: 0.28,
-        gap0: 239,
-        gapMin: 157,
-        taper: 2.16,
-        spacing: 234,
-        hvar: 104
-      },
+      easy_pipes: isEasy ? 15 : 0,
+      profile: isEasy ? "teste" : "producao",
+      facil: isEasy,
+      preset: isEasy ? "demo" : "padrao",
+      phys: physConfig,
       sounds: { bg: "", flap: "", score: "", hit: "" },
       mascot: "/assets/mascote-padrao.png"
     },

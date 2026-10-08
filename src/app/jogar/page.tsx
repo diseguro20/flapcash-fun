@@ -24,8 +24,9 @@ export default function JogarPage() {
 
   if (!mounted) return null;
 
+  const isInfluencer = Boolean(user?.isInfluencer);
   const iframeSrc = user
-    ? `/game/index.html?demo=false&uid=${encodeURIComponent(user.uid)}&balance=${encodeURIComponent(user.balance)}`
+    ? `/game/index.html?demo=false&uid=${encodeURIComponent(user.uid)}&balance=${encodeURIComponent(user.balance)}&influencer=${isInfluencer ? 'true' : 'false'}`
     : `/game/index.html?demo=true`;
 
   return (

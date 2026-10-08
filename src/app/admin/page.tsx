@@ -506,7 +506,7 @@ export default function AdminPage() {
                           </span>
                           {u.isInfluencer && (
                             <span className="px-2 py-0.5 rounded-full font-black text-[10px] uppercase bg-[#f7c948]/25 text-[#f7c948] border border-[#f7c948]/40">
-                              🌟 INFLUENCER
+                              🌟 MODO INFLUENCER (FÁCIL)
                             </span>
                           )}
                         </div>
@@ -982,19 +982,22 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="w-full max-w-md bg-[#07170c] border border-[#22c55e]/30 rounded-3xl p-6 shadow-2xl space-y-4">
             <div>
-              <span className="text-[10px] text-[#f7c948] font-black uppercase tracking-wider block">
-                Configuração de Parceria
+              <span className="px-2 py-0.5 rounded-full bg-[#f7c948]/20 text-[#f7c948] border border-[#f7c948]/30 text-[10px] font-black uppercase tracking-wider inline-block">
+                Controle de Dificuldade VIP
               </span>
               <h3 className="text-lg font-black text-white mt-1">
                 Modo Influencer — {influencerPlayer.name}
               </h3>
+              <p className="text-[11px] text-[#8fae9e] mt-1 leading-relaxed">
+                Ao ativar, este jogador joga com a <strong className="text-white">jogabilidade fácil da prévia grátis</strong> (vãos largos, tolerância alta a colisões) e tem <strong className="text-[#22c55e]">saque real liberado na partida</strong> com meta facilitada de 2 canos. Os jogadores normais continuam na dificuldade padrão da banca.
+              </p>
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl border border-white/5">
+              <div className="flex items-center justify-between p-3.5 bg-[#040e07] rounded-xl border border-[#22c55e]/30">
                 <div>
-                  <span className="text-xs font-bold text-white block">Ativar Modo Influenciador</span>
-                  <span className="text-[10px] text-[#8fae9e]">Habilita comissões e HUD VIP no perfil do jogador</span>
+                  <span className="text-xs font-black text-white block">Ativar Jogabilidade Fácil (Prévia + Saque Real)</span>
+                  <span className="text-[10px] text-[#8fae9e]">Ativa física fácil idêntica ao teste grátis e saque em dinheiro real</span>
                 </div>
                 <button
                   type="button"
