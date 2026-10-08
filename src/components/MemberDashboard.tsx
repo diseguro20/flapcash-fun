@@ -21,7 +21,9 @@ import {
   Sparkles,
   Copy,
   Check,
-  Share2
+  Share2,
+  Gift,
+  MessageCircle
 } from 'lucide-react';
 
 export default function MemberDashboard() {
@@ -38,9 +40,29 @@ export default function MemberDashboard() {
   const [sideOpen, setSideOpen] = useState(false);
   const [cena, setCena] = useState<'classico' | 'miami'>('miami');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase().includes('diseguro');
   const isInfluencer = Boolean(user?.isInfluencer);
   const balance = Number(user?.balance || 0);
+
+  // Link de afiliado individual garantido para todos os leads
+  const refCode = user?.referralCode || (user?.uid ? 'REF' + user.uid.replace(/\D/g, '').slice(-5) : 'FLAPVIP');
+  const appOrigin = typeof window !== 'undefined' && window.location.origin.includes('http')
+    ? window.location.origin
+    : 'https://flapcash-fun.vercel.app';
+  const refLink = `${appOrigin}/?ref=${refCode}`;
+
+  const handleCopyAffiliate = () => {
+    navigator.clipboard.writeText(refLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = `🚨 Jogue Flappy Bird valendo PIX na FlapCash! Cadastre-se pelo meu link e ganhe 100% de bônus no primeiro depósito: ${refLink}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   const handlePlayNow = () => {
     if (balance < 5) {
@@ -207,7 +229,7 @@ export default function MemberDashboard() {
       )}
 
       {/* ÁREA PRINCIPAL */}
-      <div className="flex-1 md:ml-60 flex flex-col min-w-0">
+      <div className="flex-1 md:ml-60 flex flex-col min-w-0 pb-24 md:pb-0">
         {/* TOPBAR */}
         <header className="sticky top-0 z-30 bg-[#050b07]/85 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-[#183324]/60">
           <div className="flex items-center gap-3">
@@ -222,17 +244,26 @@ export default function MemberDashboard() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* BOTÃO INDIQUE E GANHE NO HEADER */}
+            <button
+              onClick={() => setIsReferralOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f7c948]/15 border border-[#f7c948]/35 text-[#f7c948] hover:bg-[#f7c948]/25 transition text-xs font-black shadow-sm"
+            >
+              <Gift className="w-3.5 h-3.5" />
+              <span>Afiliados</span>
+            </button>
+
             {/* SALDO EM DESTAQUE COM BOTÃO + */}
             <button
               onClick={() => setIsDepositOpen(true)}
-              className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.04] border border-[#22c55e]/30 hover:border-[#22c55e] transition"
+              className="flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/[0.04] border border-[#22c55e]/30 hover:border-[#22c55e] transition"
             >
               <span className="text-xs sm:text-sm font-black text-white">
                 R$ {balance.toFixed(2)}
               </span>
-              <span className="w-6 h-6 rounded-full bg-gradient-to-b from-[#22c55e] to-[#16a34a] flex items-center justify-center text-[#04160b] shadow-[0_2px_8px_rgba(34,197,94,0.6)]">
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-b from-[#22c55e] to-[#16a34a] flex items-center justify-center text-[#04160b] shadow-[0_2px_8px_rgba(34,197,94,0.6)]">
+                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
               </span>
             </button>
 
@@ -440,6 +471,89 @@ export default function MemberDashboard() {
           </div>
         </section>
 
+        {/* BANNER / CARD DE AFILIADOS PARA TODOS OS LEADS */}
+        <section className="w-full max-w-[1180px] mx-auto px-4 my-6">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c2214] via-[#081a0f] to-[#041009] border border-[#22c55e]/30 p-6 sm:p-8 shadow-2xl">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-[#22c55e]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-[#f7c948]/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="max-w-xl space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f7c948]/15 border border-[#f7c948]/40 text-[#f7c948] text-[11px] font-black uppercase tracking-wider">
+                  <Gift className="w-3.5 h-3.5" />
+                  <span>Seu Link de Afiliado Ativo • 10% no PIX</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
+                  Indique Amigos e Ganhe com Cada Depósito
+                </h3>
+                <p className="text-xs sm:text-sm text-[#8fae9c] leading-relaxed">
+                  Todos os jogadores têm link de indicação liberado! Você ganha <strong>10%</strong> do primeiro depósito de cada indicado direto, mais comissões de sub-afiliados. O saldo cai na hora para jogar ou sacar!
+                </p>
+                
+                <div className="flex flex-wrap items-center gap-2 pt-2 text-[11px] font-bold text-[#cfe6d8]">
+                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[#86efac]">
+                    ⭐ Nível 1: 10% Direto
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[#f7c948]">
+                    🚀 Nível 2: 5% Sub
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[#8fae9c]">
+                    🌐 Nível 3: 2% Rede
+                  </span>
+                </div>
+              </div>
+
+              {/* Ações e Copiar Link */}
+              <div className="lg:min-w-[380px] bg-[#050e08]/80 border border-[#22c55e]/25 rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
+                <div className="flex items-center justify-between text-xs font-bold text-[#8fae9c]">
+                  <span>Seu Link Exclusivo:</span>
+                  <span className="text-[#22c55e] font-black">Cód: {refCode}</span>
+                </div>
+
+                <div className="flex items-center gap-2 bg-[#030905] border border-white/10 rounded-xl px-3 py-2 text-xs">
+                  <span className="text-white font-mono truncate flex-1 select-all">
+                    {refLink}
+                  </span>
+                  <button
+                    onClick={handleCopyAffiliate}
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-[#22c55e] hover:text-[#04160b] text-[#cfe6d8] transition flex items-center gap-1 text-[11px] font-bold flex-shrink-0"
+                    title="Copiar Link"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#22c55e]" />
+                        <span className="text-[#22c55e]">Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-xs transition shadow-md"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-current" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => setIsReferralOpen(true)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition border border-white/10"
+                  >
+                    <TrendingUp className="w-4 h-4 text-[#22c55e]" />
+                    <span>Ver Painel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* TICKER AO VIVO DE GANHADORES */}
         <section className="w-full max-w-[1180px] mx-auto px-4 my-2">
           <div className="bg-[#07170c] border border-[#22c55e]/20 rounded-2xl p-3 flex items-center gap-4 overflow-hidden">
@@ -515,6 +629,62 @@ export default function MemberDashboard() {
         <footer className="mt-12 py-8 border-t border-[#183324]/40 text-center text-xs text-[#5e7c6b]">
           <p>© 2026 FlapCash — Plataforma de Jogo por Habilidade. Todos os direitos reservados.</p>
         </footer>
+      </div>
+
+      {/* BARRA FIXA INFERIOR NO MOBILE */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#07130b]/95 backdrop-blur-md border-t border-[#183324] px-4 py-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+        <button
+          onClick={handlePlayNow}
+          className="flex flex-col items-center gap-1 text-white hover:text-[#22c55e] transition"
+        >
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] flex items-center justify-center text-[#04160b] shadow-md">
+            <Play className="w-4 h-4 fill-current" />
+          </div>
+          <span className="text-[10px] font-black tracking-wider uppercase text-[#22c55e]">Jogar</span>
+        </button>
+
+        <button
+          onClick={() => setIsDepositOpen(true)}
+          className="flex flex-col items-center gap-1 text-[#cfe6d8] hover:text-white transition"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+            <Plus className="w-4 h-4 text-[#22c55e]" />
+          </div>
+          <span className="text-[10px] font-bold">Depósito</span>
+        </button>
+
+        <button
+          onClick={() => setIsReferralOpen(true)}
+          className="flex flex-col items-center gap-1 text-[#f7c948] hover:text-[#fde047] transition relative"
+        >
+          <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#f7c948] text-black text-[8px] font-black rounded-full">
+            10%
+          </span>
+          <div className="w-8 h-8 rounded-full bg-[#f7c948]/15 border border-[#f7c948]/30 flex items-center justify-center">
+            <Gift className="w-4 h-4 text-[#f7c948]" />
+          </div>
+          <span className="text-[10px] font-black text-[#f7c948]">Afiliados</span>
+        </button>
+
+        <button
+          onClick={() => setIsWithdrawOpen(true)}
+          className="flex flex-col items-center gap-1 text-[#cfe6d8] hover:text-white transition"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+            <ArrowUpRight className="w-4 h-4 text-[#f7c948]" />
+          </div>
+          <span className="text-[10px] font-bold">Sacar</span>
+        </button>
+
+        <button
+          onClick={() => setIsProfileOpen(true)}
+          className="flex flex-col items-center gap-1 text-[#cfe6d8] hover:text-white transition"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+            <User className="w-4 h-4 text-[#8fae9c]" />
+          </div>
+          <span className="text-[10px] font-bold">Perfil</span>
+        </button>
       </div>
     </div>
   );

@@ -39,8 +39,12 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search);
     const p = params.get('p');
     const tab = params.get('tab');
+    const ref = params.get('ref');
 
-    if (p === 'entrar') {
+    if (ref) {
+      localStorage.setItem('flapcash_ref_code', ref);
+      setIsRegisterOpen(true);
+    } else if (p === 'entrar') {
       if (tab === 'cadastro') setIsRegisterOpen(true);
       else setIsLoginOpen(true);
     } else if (p === 'demo') {

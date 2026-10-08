@@ -26,6 +26,20 @@ export default function AuthModals() {
   const [regPass, setRegPass] = useState('');
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
+  const [activeRefCode, setActiveRefCode] = useState('');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ref = new URLSearchParams(window.location.search).get('ref');
+      if (ref) {
+        localStorage.setItem('flapcash_ref_code', ref);
+        setActiveRefCode(ref);
+      } else {
+        const stored = localStorage.getItem('flapcash_ref_code');
+        if (stored) setActiveRefCode(stored);
+      }
+    }
+  }, []);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,12 +68,14 @@ export default function AuthModals() {
     }
     setRegLoading(true);
     setRegError('');
+    const refToUse = activeRefCode || (typeof window !== 'undefined' ? localStorage.getItem('flapcash_ref_code') || undefined : undefined);
     const res = await register({
       name: regName,
       email: regEmail,
       phone: regPhone,
       cpf: regCpf,
-      password: regPass
+      password: regPass,
+      ref: refToUse
     });
     setRegLoading(false);
     if (res.success) {
@@ -201,6 +217,12 @@ export default function AuthModals() {
               <p className="text-xs sm:text-sm text-[#8fae9e] font-medium mt-1">
                 Bônus exclusivos para começar a voar com tudo!
               </p>
+              {activeRefCode && (
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f7c948]/15 border border-[#f7c948]/35 text-[#f7c948] text-xs font-bold">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Convite exclusivo: <strong>{activeRefCode}</strong></span>
+                </div>
+              )}
             </div>
 
             {regError && (
