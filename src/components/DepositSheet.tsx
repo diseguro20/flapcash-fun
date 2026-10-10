@@ -33,42 +33,62 @@ export default function DepositSheet() {
     return () => clearInterval(interval);
   }, [pixData, isPaid]);
 
-  // Polling automático de status do webhook da Vizzion Pay
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
+
+  // Verificação oficial de pagamento
+  const checkPaymentStatus = async (isManual = false) => {
+    if (!pixData || isPaid) return;
+    if (isManual) setCheckingPayment(true);
+    try {
+      const res = await fetch(`/api/vizzionpay/status?txId=${pixData.transactionId}`);
+      const data = await res.json();
+      if (data.paid || data.status === 'COMPLETED') {
+        setIsPaid(true);
+        const creditAmount = Number(data.amount || pixData.amount || 20);
+        try {
+          await updateBalance(creditAmount, creditAmount);
+          await recordTransaction({
+            amount: creditAmount,
+            type: 'deposit',
+            status: 'approved',
+            gateway: 'vizzionpay',
+            gatewayTransactionId: pixData.transactionId
+          });
+        } catch (e) {}
+
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        } catch (e) {}
+        setTimeout(() => {
+          setIsDepositOpen(false);
+          setPixData(null);
+          setIsPaid(false);
+        }, 3000);
+      } else if (isManual) {
+        setStatusNotice('Pagamento ainda em processamento pelo banco. Aguarde alguns instantes.');
+        setTimeout(() => setStatusNotice(null), 4000);
+      }
+    } catch (e) {
+      if (isManual) {
+        setStatusNotice('Consultando status...');
+        setTimeout(() => setStatusNotice(null), 3000);
+      }
+    } finally {
+      if (isManual) setCheckingPayment(false);
+    }
+  };
+
+  // Polling automático de status com intervalo seguro para evitar rate limit
   useEffect(() => {
     if (!pixData || isPaid) return;
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/vizzionpay/status?txId=${pixData.transactionId}`);
-        const data = await res.json();
-        if (data.paid || data.status === 'COMPLETED') {
-          setIsPaid(true);
-          const creditAmount = Number(data.amount || pixData.amount || 20);
-          try {
-            await updateBalance(creditAmount, creditAmount);
-            await recordTransaction({
-              amount: creditAmount,
-              type: 'deposit',
-              status: 'approved',
-              gateway: 'vizzionpay',
-              gatewayTransactionId: pixData.transactionId
-            });
-          } catch (e) {}
-
-          try {
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-            });
-          } catch (e) {}
-          setTimeout(() => {
-            setIsDepositOpen(false);
-            setPixData(null);
-            setIsPaid(false);
-          }, 3000);
-        }
-      } catch (e) {}
-    }, 3000);
+    const pollInterval = setInterval(() => {
+      checkPaymentStatus(false);
+    }, 5000);
     return () => clearInterval(pollInterval);
   }, [pixData, isPaid]);
 
@@ -346,14 +366,28 @@ export default function DepositSheet() {
 
                 <div className="pt-2 flex flex-col gap-2">
                   <button
-                    onClick={handleSimulatePayment}
-                    className="w-full py-3 px-4 rounded-full font-extrabold text-sm bg-white/10 hover:bg-white/15 text-white transition"
+                    onClick={() => checkPaymentStatus(true)}
+                    disabled={checkingPayment}
+                    className="w-full py-3.5 px-4 rounded-full font-black text-sm bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:brightness-110 text-black shadow-[0_4px_15px_rgba(34,197,94,0.3)] transition flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50"
                   >
-                    Já realizei o pagamento
+                    {checkingPayment ? (
+                      <>
+                        <Clock className="w-4 h-4 animate-spin" /> Verificando com o banco...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" /> Já fiz o Pix! Atualizar Saldo
+                      </>
+                    )}
                   </button>
+                  {statusNotice && (
+                    <p className="text-xs text-[#f7c948] font-bold text-center animate-pulse">
+                      {statusNotice}
+                    </p>
+                  )}
                   <button
                     onClick={() => setPixData(null)}
-                    className="text-xs text-[#8fae9e] hover:text-white transition"
+                    className="text-xs text-[#8fae9e] hover:text-white transition mt-1"
                   >
                     Voltar e alterar valor
                   </button>

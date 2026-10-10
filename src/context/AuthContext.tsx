@@ -114,6 +114,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Sincronização periódica e em eventos de retorno à aba (ex: após pagar Pix no app do banco)
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    let isSyncing = false;
+    const syncPendingPayments = () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      fetch('/api/auth/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: user.uid, email: user.email })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data?.ok && data?.user) {
+            setUser(prev => prev ? { ...prev, ...data.user } : data.user);
+            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(data.user));
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          isSyncing = false;
+        });
+    };
+
+    // 1. Sincronização periódica a cada 12 segundos
+    const timer = setInterval(syncPendingPayments, 12000);
+
+    // 2. Sempre que a janela recupera o foco ou a aba fica visível após retorno do app do banco
+    const handleFocus = () => syncPendingPayments();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncPendingPayments();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user?.uid, user?.email]);
+
   // Listen to Firestore updates if user logged in
   useEffect(() => {
     if (!user?.uid) return;

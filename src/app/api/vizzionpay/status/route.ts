@@ -3,6 +3,9 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { vizzionPay } from '@/lib/vizzionpay';
 
+// Cache em memória para evitar 429 TOO_MANY_REQUESTS na API da Vizzion Pay
+const statusCache = new Map<string, { timestamp: number; data: any }>();
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -34,7 +37,13 @@ export async function GET(req: Request) {
       console.warn('[Status route firestore check warning]:', e);
     }
 
-    // 2. Consulta a API oficial da Vizzion Pay diretamente
+    // 2. Debounce em memória: se consultado nos últimos 8 segundos, retorna pendente para não sofrer 429
+    const cached = statusCache.get(txId);
+    if (cached && Date.now() - cached.timestamp < 8000) {
+      return NextResponse.json(cached.data);
+    }
+
+    // 3. Consulta a API oficial da Vizzion Pay diretamente
     try {
       const tx = await vizzionPay.getTransaction(txId, depositData?.externalReference);
       if (tx && vizzionPay.isTransactionPaid(tx)) {
@@ -55,12 +64,15 @@ export async function GET(req: Request) {
             const userSnap = await getDoc(userRef);
 
             if (userSnap.exists()) {
-              const currentBalance = Number(userSnap.data().balance || 0);
-              const currentBonus = Number(userSnap.data().bonusBalance || 0);
+              const currentBalance = Number(userSnap.data().balance || userSnap.data().cash_balance || 0);
+              const currentBonus = Number(userSnap.data().bonusBalance || userSnap.data().bonus_balance || 0);
+              const newBalance = Number((currentBalance + amount).toFixed(2));
+              const newBonus = Number((currentBonus + amount).toFixed(2));
 
               await updateDoc(userRef, {
-                balance: Number((currentBalance + amount).toFixed(2)),
-                bonusBalance: Number((currentBonus + amount).toFixed(2)),
+                balance: newBalance,
+                cash_balance: newBalance,
+                bonusBalance: newBonus,
                 updatedAt: new Date().toISOString()
               });
             }
@@ -80,24 +92,28 @@ export async function GET(req: Request) {
           }
         }
 
-        return NextResponse.json({
+        const successResp = {
           success: true,
           transactionId: txId,
           status: 'COMPLETED',
           paid: true,
           amount
-        });
+        };
+        statusCache.set(txId, { timestamp: Date.now(), data: successResp });
+        return NextResponse.json(successResp);
       }
     } catch (e: any) {
-      console.warn('[Status route Vizzion Pay check warning]:', e.message);
+      console.warn('[Status route Vizzion Pay check notice]:', e.message);
     }
 
-    return NextResponse.json({
+    const pendingResp = {
       success: true,
       transactionId: txId,
       status: 'pending',
       paid: false
-    });
+    };
+    statusCache.set(txId, { timestamp: Date.now(), data: pendingResp });
+    return NextResponse.json(pendingResp);
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

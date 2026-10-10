@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
+import { vizzionPay } from '@/lib/vizzionpay';
 
 export async function POST(req: Request) {
   try {
@@ -53,6 +54,52 @@ export async function POST(req: Request) {
       // Garante que o documento tenha a senha gravada
       if (password && dt.password !== password) {
         await setDoc(userRef, { password }, { merge: true });
+      }
+
+      // Auto-conciliação em tempo real de depósitos pendentes via Vizzion Pay
+      try {
+        const depSnap = await getDocs(collection(db, 'deposits'));
+        const pendingUserDeposits = depSnap.docs.filter(d => {
+          const depData = d.data();
+          const matchesUid = depData.userId === snap.id || (targetUid && depData.userId === targetUid);
+          const matchesExtRef = (depData.externalReference && (depData.externalReference.includes(snap.id) || (targetUid && depData.externalReference.includes(targetUid))));
+          return depData.status === 'PENDING' && (matchesUid || matchesExtRef);
+        });
+
+        for (const depDoc of pendingUserDeposits) {
+          const depData = depDoc.data();
+          try {
+            const tx = await vizzionPay.getTransaction(depDoc.id, depData.externalReference);
+            if (tx && vizzionPay.isTransactionPaid(tx)) {
+              const amount = Number(tx.amount || tx.chargeAmount || depData.amount || 0);
+              if (amount > 0) {
+                const currentBal = Number(dt.balance ?? dt.cash_balance ?? 0.00);
+                const currentBonus = Number(dt.bonusBalance ?? dt.bonus_balance ?? 0.00);
+                const newBal = Number((currentBal + amount).toFixed(2));
+                const newBonus = Number((currentBonus + amount).toFixed(2));
+
+                await updateDoc(userRef, {
+                  balance: newBal,
+                  cash_balance: newBal,
+                  bonusBalance: newBonus,
+                  updatedAt: new Date().toISOString()
+                });
+                await setDoc(doc(db, 'deposits', depDoc.id), {
+                  status: 'COMPLETED',
+                  paidAt: tx.payedAt || new Date().toISOString()
+                }, { merge: true });
+
+                dt.balance = newBal;
+                dt.cash_balance = newBal;
+                dt.bonusBalance = newBonus;
+              }
+            }
+          } catch (txErr) {
+            // Ignora 429 temporário
+          }
+        }
+      } catch (err) {
+        console.warn('Auto deposit sync warning:', err);
       }
 
       return NextResponse.json({
