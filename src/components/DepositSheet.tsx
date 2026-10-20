@@ -52,7 +52,7 @@ export default function DepositSheet() {
             amount: creditAmount,
             type: 'deposit',
             status: 'approved',
-            gateway: 'vizzionpay',
+            gateway: (data.gateway as any) || (pixData as any).gateway || 'vizzionpay',
             gatewayTransactionId: pixData.transactionId
           });
         } catch (e) {}
@@ -138,7 +138,7 @@ export default function DepositSheet() {
           status: 'pending',
           pixCode: data.pixCode,
           pixQrCode: data.pixQrCode,
-          gateway: 'vizzionpay',
+          gateway: (data.gateway as any) || 'vizzionpay',
           gatewayTransactionId: data.transactionId
         });
       } else {
@@ -227,7 +227,7 @@ export default function DepositSheet() {
             DEPOSITAR <span className="text-[#22c55e]">SALDO</span>
           </h2>
           <p className="text-xs text-[#8fae9e] mt-0.5">
-            Mínimo R$ 20,00 · Processamento instantâneo via Vizzion Pay
+            Mínimo R$ 20,00 · Processamento instantâneo via PIX Oficial
           </p>
         </div>
 
@@ -399,7 +399,7 @@ export default function DepositSheet() {
 
         <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-center gap-2 text-xs text-[#8fae9e]">
           <ShieldCheck className="w-4 h-4 text-[#22c55e]" />
-          <span>Pagamento seguro via Gateway Oficial Vizzion Pay</span>
+          <span>Pagamento seguro via Gateway Oficial PIX</span>
         </div>
       </div>
     </div>

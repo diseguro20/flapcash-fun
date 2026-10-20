@@ -467,14 +467,20 @@ export default function AdminPage() {
 
               <div className="bg-[#07170c] border border-[#22c55e]/25 rounded-3xl p-6 shadow-xl">
                 <h3 className="text-sm font-black text-[#8fae9e] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-[#22c55e]" /> Status do Gateway Vizzion Pay
+                  <SlidersHorizontal className="w-4 h-4 text-[#22c55e]" /> Status dos Gateways (Split 40% Omega / 60% Vizzion)
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl">
-                    <span className="text-xs text-[#8fae9e]">Modo de Operação</span>
-                    <span className="text-xs font-black text-[#22c55e] uppercase">
-                      {data?.settings?.vizzionPayMode === 'live' ? '🟢 PRODUÇÃO' : '🟡 SANDBOX (SEGURO)'}
-                    </span>
+                    <span className="text-xs text-[#8fae9e]">Vizzion Pay (60%)</span>
+                    <span className="text-xs font-black text-[#22c55e] uppercase">🟢 PRODUÇÃO</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl">
+                    <span className="text-xs text-[#8fae9e]">OmegaPay (40%)</span>
+                    <span className="text-xs font-black text-[#a855f7] uppercase">🟢 PRODUÇÃO</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl">
+                    <span className="text-xs text-[#8fae9e]">Regra Piveti / Final 9392</span>
+                    <span className="text-xs font-bold text-[#f7c948]">100% Vizzion Pay</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#040e07] rounded-xl">
                     <span className="text-xs text-[#8fae9e]">Depósito Mínimo</span>
@@ -611,8 +617,8 @@ export default function AdminPage() {
           <div className="space-y-6">
             {/* DEPÓSITOS */}
             <div className="bg-[#07170c] border border-[#22c55e]/25 rounded-3xl p-6 shadow-xl">
-              <h2 className="text-lg font-black uppercase text-white mb-1">Depósitos PIX Recentes (Vizzion Pay)</h2>
-              <p className="text-xs text-[#8fae9e] mb-4">Acompanhe as recargas de saldo geradas pelos leads</p>
+              <h2 className="text-lg font-black uppercase text-white mb-1">Depósitos PIX Recentes (Vizzion Pay / OmegaPay)</h2>
+              <p className="text-xs text-[#8fae9e] mb-4">Acompanhe as recargas de saldo geradas pelos leads e o roteamento entre gateways</p>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
@@ -621,6 +627,7 @@ export default function AdminPage() {
                       <th className="py-2.5 px-3">Data</th>
                       <th className="py-2.5 px-3">Transação</th>
                       <th className="py-2.5 px-3">Jogador</th>
+                      <th className="py-2.5 px-3">Gateway</th>
                       <th className="py-2.5 px-3">Valor</th>
                       <th className="py-2.5 px-3">Status</th>
                     </tr>
@@ -636,6 +643,15 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3 px-3 font-bold text-white">
                           {d.userId || 'usr_desconhecido'}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`px-2 py-0.5 rounded-md font-black text-[10px] uppercase ${
+                            d.gateway === 'omegapay' 
+                              ? 'bg-[#a855f7]/20 text-[#c084fc] border border-[#a855f7]/30' 
+                              : 'bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30'
+                          }`}>
+                            {d.gateway === 'omegapay' ? 'OmegaPay' : 'VizzionPay'}
+                          </span>
                         </td>
                         <td className="py-3 px-3 font-black text-[#22c55e]">
                           {moneyFormat.format(d.amount || 0)}

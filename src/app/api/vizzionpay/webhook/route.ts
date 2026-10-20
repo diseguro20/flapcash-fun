@@ -114,12 +114,15 @@ export async function POST(req: Request) {
             const userSnap = await getDoc(userRef);
 
             if (userSnap.exists()) {
-              const currentBalance = Number(userSnap.data().balance || 0);
-              const currentBonus = Number(userSnap.data().bonusBalance || 0);
+              const currentBalance = Number(userSnap.data().balance || userSnap.data().cash_balance || 0);
+              const currentBonus = Number(userSnap.data().bonusBalance || userSnap.data().bonus_balance || 0);
+              const newBalance = Number((currentBalance + rawAmount).toFixed(2));
+              const newBonus = Number((currentBonus + rawAmount).toFixed(2));
 
               await updateDoc(userRef, {
-                balance: Number((currentBalance + rawAmount).toFixed(2)),
-                bonusBalance: Number((currentBonus + rawAmount).toFixed(2)),
+                balance: newBalance,
+                cash_balance: newBalance,
+                bonusBalance: newBonus,
                 updatedAt: new Date().toISOString()
               });
 
@@ -128,12 +131,12 @@ export async function POST(req: Request) {
                 amount: rawAmount,
                 status: 'COMPLETED',
                 transactionId,
-                gateway: 'VIZZION_PAY',
+                gateway: depositSnap.exists() && depositSnap.data()?.gateway ? depositSnap.data().gateway : 'vizzionpay',
                 paidAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               }, { merge: true });
 
-              console.log(`[VizzionPay Webhook] Saldo creditado para usuário ${targetUserId}: +R$ ${rawAmount}`);
+              console.log(`[Webhook] Saldo creditado para usuário ${targetUserId}: +R$ ${rawAmount}`);
             }
           }
         } catch (dbErr) {

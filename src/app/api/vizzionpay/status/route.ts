@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { vizzionPay } from '@/lib/vizzionpay';
+import { omegaPay } from '@/lib/omegapay';
 
-// Cache em memória para evitar 429 TOO_MANY_REQUESTS na API da Vizzion Pay
+// Cache em memória para evitar 429 TOO_MANY_REQUESTS nas APIs de Gateway
 const statusCache = new Map<string, { timestamp: number; data: any }>();
 
 export async function GET(req: Request) {
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
             transactionId: txId,
             status: 'COMPLETED',
             paid: true,
+            gateway: depositData.gateway || 'vizzionpay',
             amount: depositData.amount
           });
         }
@@ -43,10 +45,34 @@ export async function GET(req: Request) {
       return NextResponse.json(cached.data);
     }
 
-    // 3. Consulta a API oficial da Vizzion Pay diretamente
+    // 3. Consulta a API oficial do Gateway correspondente (OmegaPay ou VizzionPay)
+    const isOmega = depositData?.gateway === 'omegapay';
+    let tx: any = null;
+    let isPaid = false;
+    let actualGateway = isOmega ? 'omegapay' : 'vizzionpay';
+
     try {
-      const tx = await vizzionPay.getTransaction(txId, depositData?.externalReference);
-      if (tx && vizzionPay.isTransactionPaid(tx)) {
+      if (isOmega) {
+        tx = await omegaPay.getTransaction(txId, depositData?.externalReference);
+        isPaid = omegaPay.isTransactionPaid(tx);
+      } else {
+        tx = await vizzionPay.getTransaction(txId, depositData?.externalReference);
+        isPaid = vizzionPay.isTransactionPaid(tx);
+      }
+
+      // Se não encontrou no gateway esperado e o depósito não tinha gateway explícito, tenta o outro
+      if (!tx && !depositData?.gateway) {
+        try {
+          const altTx = await omegaPay.getTransaction(txId, depositData?.externalReference);
+          if (altTx) {
+            tx = altTx;
+            isPaid = omegaPay.isTransactionPaid(altTx);
+            actualGateway = 'omegapay';
+          }
+        } catch (_) {}
+      }
+
+      if (tx && isPaid) {
         const amount = Number(tx.amount || tx.chargeAmount || depositData?.amount || 20);
         const externalRef = String(tx.clientIdentifier || depositData?.externalReference || '');
 
@@ -57,7 +83,7 @@ export async function GET(req: Request) {
           }
         }
 
-        // Se o pagamento foi confirmado na Vizzion Pay e ainda não computou no Firestore:
+        // Se o pagamento foi confirmado no gateway e ainda não computou no Firestore:
         if (targetUserId && targetUserId !== 'guest') {
           try {
             const userRef = doc(db, 'users', targetUserId);
@@ -82,13 +108,13 @@ export async function GET(req: Request) {
               amount,
               status: 'COMPLETED',
               transactionId: txId,
-              gateway: 'VIZZION_PAY',
-              paidAt: new Date().toISOString()
+              gateway: actualGateway,
+              paidAt: tx.payedAt || new Date().toISOString()
             }, { merge: true });
 
-            console.log(`[VizzionPay Polling] Depósito pago e creditado para ${targetUserId}: R$ ${amount}`);
+            console.log(`[Payment Polling] Depósito pago via ${actualGateway} e creditado para ${targetUserId}: R$ ${amount}`);
           } catch (dbErr) {
-            console.error('[VizzionPay Polling Firestore sync error]:', dbErr);
+            console.error('[Payment Polling Firestore sync error]:', dbErr);
           }
         }
 
@@ -97,19 +123,21 @@ export async function GET(req: Request) {
           transactionId: txId,
           status: 'COMPLETED',
           paid: true,
+          gateway: actualGateway,
           amount
         };
         statusCache.set(txId, { timestamp: Date.now(), data: successResp });
         return NextResponse.json(successResp);
       }
     } catch (e: any) {
-      console.warn('[Status route Vizzion Pay check notice]:', e.message);
+      console.warn(`[Status route ${actualGateway} check notice]:`, e.message);
     }
 
     const pendingResp = {
       success: true,
       transactionId: txId,
       status: 'pending',
+      gateway: actualGateway,
       paid: false
     };
     statusCache.set(txId, { timestamp: Date.now(), data: pendingResp });

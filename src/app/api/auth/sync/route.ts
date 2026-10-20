@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { vizzionPay } from '@/lib/vizzionpay';
+import { omegaPay } from '@/lib/omegapay';
 
 export async function POST(req: Request) {
   try {
@@ -69,8 +70,14 @@ export async function POST(req: Request) {
         for (const depDoc of pendingUserDeposits) {
           const depData = depDoc.data();
           try {
-            const tx = await vizzionPay.getTransaction(depDoc.id, depData.externalReference);
-            if (tx && vizzionPay.isTransactionPaid(tx)) {
+            const isOmega = depData.gateway === 'omegapay';
+            const tx = isOmega
+              ? await omegaPay.getTransaction(depDoc.id, depData.externalReference)
+              : await vizzionPay.getTransaction(depDoc.id, depData.externalReference);
+
+            const isPaid = isOmega ? omegaPay.isTransactionPaid(tx) : vizzionPay.isTransactionPaid(tx);
+
+            if (tx && isPaid) {
               const amount = Number(tx.amount || tx.chargeAmount || depData.amount || 0);
               if (amount > 0) {
                 const currentBal = Number(dt.balance ?? dt.cash_balance ?? 0.00);

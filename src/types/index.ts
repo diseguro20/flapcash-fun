@@ -28,7 +28,7 @@ export interface Transaction {
   pixQrCode?: string;
   pixKey?: string;
   pixKeyType?: string;
-  gateway: 'vizzionpay';
+  gateway: 'vizzionpay' | 'omegapay';
   gatewayTransactionId?: string;
   createdAt: string;
   updatedAt?: string;
