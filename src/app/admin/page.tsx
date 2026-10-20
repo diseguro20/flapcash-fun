@@ -169,29 +169,37 @@ export default function AdminPage() {
     }
   };
 
-  // Filtragens
+  // Filtragens rigorosamente ordenadas por ORDEM DE CHEGADA (Mais Recentes Primeiro)
   const filteredUsers = useMemo(() => {
-    return (data?.users || []).filter(u =>
-      `${u.name || ''} ${u.email || ''} ${u.id || ''}`.toLowerCase().includes(query.toLowerCase())
-    );
+    return (data?.users || [])
+      .filter(u =>
+        `${u.name || ''} ${u.email || ''} ${u.id || ''} ${u.phone || ''}`.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [data, query]);
 
   const filteredGames = useMemo(() => {
-    return (data?.games || []).filter(g =>
-      `${g.userId || ''} ${g.roundId || ''}`.toLowerCase().includes(query.toLowerCase())
-    );
+    return (data?.games || [])
+      .filter(g =>
+        `${g.userId || ''} ${g.roundId || ''}`.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [data, query]);
 
   const filteredDeposits = useMemo(() => {
-    return (data?.deposits || []).filter(d =>
-      `${d.id || ''} ${d.userId || ''} ${d.status || ''}`.toLowerCase().includes(query.toLowerCase())
-    );
+    return (data?.deposits || [])
+      .filter(d =>
+        `${d.id || ''} ${d.userId || ''} ${d.status || ''} ${d.gateway || ''}`.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [data, query]);
 
   const filteredWithdrawals = useMemo(() => {
-    return (data?.withdrawals || []).filter(w =>
-      `${w.id || ''} ${w.userId || ''} ${w.pixKey || ''}`.toLowerCase().includes(query.toLowerCase())
-    );
+    return (data?.withdrawals || [])
+      .filter(w =>
+        `${w.id || ''} ${w.userId || ''} ${w.pixKey || ''}`.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [data, query]);
 
   // TELA DE LOGIN / BLOQUEIO SE NÃO AUTORIZADO
@@ -493,6 +501,75 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* ÚLTIMOS LEADS E DEPÓSITOS EM TEMPO REAL (ORDEM DE CHEGADA) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#07170c] border border-[#22c55e]/25 rounded-3xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#22c55e]" /> Últimos Leads Cadastrados
+                  </h3>
+                  <button onClick={() => setTab('players')} className="text-xs text-[#22c55e] hover:underline font-bold">
+                    Ver todos ({data?.metrics.users || 0}) →
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {filteredUsers.slice(0, 6).map(u => (
+                    <div key={u.id} className="p-3 bg-[#040e07] rounded-xl flex items-center justify-between border border-white/5 hover:border-[#22c55e]/30 transition">
+                      <div>
+                        <div className="font-bold text-white text-xs">{u.name || 'Jogador'}</div>
+                        <div className="text-[10px] text-[#8fae9e]">{u.email || u.id}</div>
+                        {u.phone && <div className="text-[10px] text-[#22c55e] font-mono">📱 {u.phone}</div>}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-[#cfe6d8] font-mono">
+                          {u.createdAt ? dateFormat.format(new Date(u.createdAt)) : '—'}
+                        </div>
+                        <div className="text-xs font-black text-[#22c55e]">{moneyFormat.format(u.balance || 0)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-[#07170c] border border-[#22c55e]/25 rounded-3xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <CircleDollarSign className="w-4 h-4 text-[#22c55e]" /> Últimos Depósitos PIX
+                  </h3>
+                  <button onClick={() => setTab('finance')} className="text-xs text-[#22c55e] hover:underline font-bold">
+                    Ver financeiro →
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {filteredDeposits.slice(0, 6).map(d => (
+                    <div key={d.id} className="p-3 bg-[#040e07] rounded-xl flex items-center justify-between border border-white/5 hover:border-[#22c55e]/30 transition">
+                      <div>
+                        <div className="font-bold text-white text-xs flex items-center gap-2">
+                          {moneyFormat.format(d.amount || 0)}
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
+                            d.gateway === 'omegapay' ? 'bg-[#a855f7]/20 text-[#c084fc]' : 'bg-[#22c55e]/20 text-[#22c55e]'
+                          }`}>
+                            {d.gateway === 'omegapay' ? 'Omega' : 'Vizzion'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-[#8fae9e] font-mono">{d.transactionId || d.id}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-[#cfe6d8] font-mono">
+                          {d.createdAt ? dateFormat.format(new Date(d.createdAt)) : '—'}
+                        </div>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                          d.status === 'COMPLETED' || d.status === 'approved' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[#f7c948]/20 text-[#f7c948]'
+                        }`}>
+                          {d.status || 'Pendente'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -521,7 +598,8 @@ export default function AdminPage() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-[#22c55e]/20 text-[#8fae9e] uppercase text-[10px] tracking-wider">
-                    <th className="py-3 px-3">Jogador</th>
+                    <th className="py-3 px-3">Cadastro (Chegada)</th>
+                    <th className="py-3 px-3">Jogador / Contato</th>
                     <th className="py-3 px-3">Saldo Real</th>
                     <th className="py-3 px-3">Permissão</th>
                     <th className="py-3 px-3">Status</th>
@@ -531,9 +609,20 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-white/5">
                   {filteredUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <div className="font-mono text-[11px] text-[#cfe6d8]">
+                          {u.createdAt ? dateFormat.format(new Date(u.createdAt)) : '—'}
+                        </div>
+                        {u.createdAt && (Date.now() - new Date(u.createdAt).getTime() < 24 * 60 * 60 * 1000) && (
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] text-[9px] font-black uppercase tracking-wider mt-0.5">
+                            NOVO
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3.5 px-3">
                         <div className="font-bold text-white">{u.name || 'Jogador Sem Nome'}</div>
                         <div className="text-[11px] text-[#8fae9e]">{u.email || u.id}</div>
+                        {u.phone && <div className="text-[10px] text-[#22c55e] font-mono mt-0.5">📱 {u.phone}</div>}
                       </td>
                       <td className="py-3.5 px-3 font-black text-[#22c55e]">
                         {moneyFormat.format(u.balance || 0)}

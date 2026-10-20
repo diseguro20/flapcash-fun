@@ -2,6 +2,30 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
+function extractTimestamp(raw: any, fallbackDate = '2026-10-01T00:00:00.000Z'): string {
+  if (!raw) return fallbackDate;
+  if (typeof raw === 'object' && typeof raw.toDate === 'function') {
+    try {
+      return raw.toDate().toISOString();
+    } catch (_) {}
+  }
+  if (typeof raw === 'object' && typeof raw.seconds === 'number') {
+    try {
+      return new Date(raw.seconds * 1000).toISOString();
+    } catch (_) {}
+  }
+  if (typeof raw === 'number') {
+    try {
+      return new Date(raw).toISOString();
+    } catch (_) {}
+  }
+  if (typeof raw === 'string') {
+    const parsed = Date.parse(raw);
+    if (!isNaN(parsed)) return new Date(parsed).toISOString();
+  }
+  return fallbackDate;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -22,6 +46,7 @@ export async function GET(req: Request) {
       const snapUsers = await getDocs(collection(db, 'users'));
       usersList = snapUsers.docs.map(d => {
         const dt = d.data();
+        const createdDateStr = extractTimestamp(dt.created_at || dt.createdAt || dt.timestamp, '2026-10-01T00:00:00.000Z');
         return {
           id: d.id,
           uid: d.id,
@@ -37,9 +62,12 @@ export async function GET(req: Request) {
           refCode: dt.ref_code || dt.refCode || dt.referralCode || '',
           affiliateRate: dt.affiliate_rate ?? dt.affiliateRate ?? 10,
           subAffiliateRate: dt.sub_affiliate_rate ?? dt.subAffiliateRate ?? 2,
-          createdAt: dt.created_at ? (typeof dt.created_at.toDate === 'function' ? dt.created_at.toDate().toISOString() : String(dt.created_at)) : (dt.createdAt || new Date().toISOString())
+          createdAt: createdDateStr
         };
       });
+
+      // Ordena rigorosamente por ordem de chegada: mais recentes primeiro
+      usersList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (e) {
       console.warn('Erro ao listar users no admin:', e);
     }
@@ -48,7 +76,15 @@ export async function GET(req: Request) {
     let roundsList: any[] = [];
     try {
       const snapRounds = await getDocs(collection(db, 'rounds'));
-      roundsList = snapRounds.docs.map(d => ({ id: d.id, ...d.data() }));
+      roundsList = snapRounds.docs.map(d => {
+        const dt = d.data();
+        return {
+          id: d.id,
+          ...dt,
+          createdAt: extractTimestamp(dt.createdAt || dt.created_at || dt.timestamp)
+        };
+      });
+      roundsList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (e) {
       console.warn('Erro ao listar rounds no admin:', e);
     }
@@ -57,7 +93,16 @@ export async function GET(req: Request) {
     let depositsList: any[] = [];
     try {
       const snapDeposits = await getDocs(collection(db, 'deposits'));
-      depositsList = snapDeposits.docs.map(d => ({ id: d.id, ...d.data() }));
+      depositsList = snapDeposits.docs.map(d => {
+        const dt = d.data();
+        return {
+          id: d.id,
+          ...dt,
+          createdAt: extractTimestamp(dt.createdAt || dt.created_at || dt.timestamp)
+        };
+      });
+      // Ordena rigorosamente por ordem de chegada: mais recentes primeiro
+      depositsList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (e) {
       console.warn('Erro ao listar deposits no admin:', e);
     }
@@ -66,7 +111,15 @@ export async function GET(req: Request) {
     let withdrawalsList: any[] = [];
     try {
       const snapWithdrawals = await getDocs(collection(db, 'withdrawals'));
-      withdrawalsList = snapWithdrawals.docs.map(d => ({ id: d.id, ...d.data() }));
+      withdrawalsList = snapWithdrawals.docs.map(d => {
+        const dt = d.data();
+        return {
+          id: d.id,
+          ...dt,
+          createdAt: extractTimestamp(dt.createdAt || dt.created_at || dt.timestamp)
+        };
+      });
+      withdrawalsList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (e) {
       console.warn('Erro ao listar withdrawals no admin:', e);
     }
@@ -85,7 +138,7 @@ export async function GET(req: Request) {
       affiliateLevel2: 2,
       brandName: 'FlapCash',
       supportEmail: 'suporte@flapcash.fun',
-      vizzionPayMode: 'sandbox'
+      vizzionPayMode: 'live'
     };
 
     try {
@@ -99,7 +152,15 @@ export async function GET(req: Request) {
     let auditList: any[] = [];
     try {
       const auditSnap = await getDocs(collection(db, 'adminAudit'));
-      auditList = auditSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      auditList = auditSnap.docs.map(d => {
+        const dt = d.data();
+        return {
+          id: d.id,
+          ...dt,
+          createdAt: extractTimestamp(dt.createdAt || dt.created_at || dt.timestamp)
+        };
+      });
+      auditList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } catch (e) {}
 
     // Cálculos de KPIs
