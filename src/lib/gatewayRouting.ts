@@ -57,40 +57,6 @@ export function isPlayer9392OrPiveti(user: any = {}): boolean {
  * Obtém o gateway para o próximo depósito
  */
 export async function getNextGateway(user: any = {}): Promise<GatewayType> {
-  // 1. Jogador Piveti ou com final 9392: 100% VizzionPay fixo
-  if (isPlayer9392OrPiveti(user)) {
-    console.log(`[Gateway Routing] Usuário ${user.phone || user.email || user.username || user.uid || 'Piveti'} identificado com regra 9392/Piveti → 100% VizzionPay`);
-    return 'vizzionpay';
-  }
-
-  // 2. Ciclo determinístico 40% OmegaPay / 60% VizzionPay com persistência no Firestore
-  const routingRef = doc(db, 'settings', 'gateway_routing');
-  try {
-    const chosen = await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(routingRef);
-      const data = snap.exists() ? snap.data() : { counter: 0 };
-      const currentCounter = Number(data.counter || 0);
-
-      const gateway = GATEWAY_CYCLE_40_60[currentCounter % GATEWAY_CYCLE_40_60.length];
-      const nextCounter = currentCounter + 1;
-
-      transaction.set(routingRef, {
-        counter: nextCounter,
-        last_gateway: gateway,
-        cycle_position: (currentCounter % GATEWAY_CYCLE_40_60.length) + 1,
-        total_cycle: GATEWAY_CYCLE_40_60.length,
-        ratio: '40% OmegaPay / 60% VizzionPay (2 de 5 Omega, 3 de 5 Vizzion)',
-        updated_at: new Date().toISOString()
-      }, { merge: true });
-
-      return gateway;
-    });
-
-    console.log(`[Gateway Routing] Próximo depósito roteado para: ${chosen} (40% Omega / 60% Vizzion)`);
-    return chosen;
-  } catch (err: any) {
-    console.warn('[Gateway Routing] Erro ao sincronizar contador de rota, fallback determinístico em memória:', err.message);
-    // Em caso de falha de conexão transitória, mantém 40% / 60%
-    return Math.random() < 0.40 ? 'omegapay' : 'vizzionpay';
-  }
+  // OmegaPay desativada temporariamente: 100% dos depósitos vão para VizzionPay
+  return 'vizzionpay';
 }
