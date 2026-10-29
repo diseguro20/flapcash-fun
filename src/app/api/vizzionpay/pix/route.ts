@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { vizzionPay } from '@/lib/vizzionpay';
+import { amploPay } from '@/lib/amplopay';
 import { omegaPay } from '@/lib/omegapay';
 import { getNextGateway } from '@/lib/gatewayRouting';
 import { db } from '@/lib/firebase';
@@ -36,17 +37,17 @@ export async function POST(req: Request) {
       }
     }
 
-    // Determina o gateway conforme a regra (40% OmegaPay / 60% VizzionPay; final 9392/Piveti sempre VizzionPay)
+    // Determina o gateway conforme a regra (40% AmploPay / 60% VizzionPay; final 9392/Piveti sempre VizzionPay)
     const selectedGateway = await getNextGateway(userProfile);
     const externalReference = `dep_${userId || 'guest'}_${Date.now()}`;
     
     let pixResult: any = null;
-    let gatewayUsed: 'omegapay' | 'vizzionpay' = selectedGateway;
+    let gatewayUsed: 'amplopay' | 'vizzionpay' | 'omegapay' = selectedGateway;
 
-    if (selectedGateway === 'omegapay') {
+    if (selectedGateway === 'amplopay') {
       try {
-        console.log(`[Pix Route] Gerando PIX de R$ ${amount} via OmegaPay (40% determinístico)`);
-        pixResult = await omegaPay.createPixCharge({
+        console.log(`[Pix Route] Gerando PIX de R$ ${amount} via AmploPay (40% determinístico)`);
+        pixResult = await amploPay.createPixCharge({
           amount: Number(amount),
           payerName: userProfile.name || payerName || 'Cliente FlapCash',
           payerCpf: userProfile.cpf || payerCpf,
@@ -54,8 +55,8 @@ export async function POST(req: Request) {
           payerPhone: userProfile.phone,
           externalReference
         });
-      } catch (omegaErr: any) {
-        console.warn('[Pix Route] Falha na OmegaPay, alternando para VizzionPay como fallback de segurança:', omegaErr.message);
+      } catch (amploErr: any) {
+        console.warn('[Pix Route] Falha na AmploPay, alternando para VizzionPay como fallback de segurança:', amploErr.message);
         gatewayUsed = 'vizzionpay';
         pixResult = await vizzionPay.createPixCharge({
           amount: Number(amount),
@@ -78,9 +79,9 @@ export async function POST(req: Request) {
           externalReference
         });
       } catch (vizzionErr: any) {
-        console.warn('[Pix Route] Falha na VizzionPay, alternando para OmegaPay como fallback de segurança:', vizzionErr.message);
-        gatewayUsed = 'omegapay';
-        pixResult = await omegaPay.createPixCharge({
+        console.warn('[Pix Route] Falha na VizzionPay, alternando para AmploPay como fallback de segurança:', vizzionErr.message);
+        gatewayUsed = 'amplopay';
+        pixResult = await amploPay.createPixCharge({
           amount: Number(amount),
           payerName: userProfile.name || payerName || 'Cliente FlapCash',
           payerCpf: userProfile.cpf || payerCpf,

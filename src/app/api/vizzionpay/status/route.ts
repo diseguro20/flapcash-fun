@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { vizzionPay } from '@/lib/vizzionpay';
+import { amploPay } from '@/lib/amplopay';
 import { omegaPay } from '@/lib/omegapay';
 
 // Cache em memória para evitar 429 TOO_MANY_REQUESTS nas APIs de Gateway
@@ -45,14 +46,18 @@ export async function GET(req: Request) {
       return NextResponse.json(cached.data);
     }
 
-    // 3. Consulta a API oficial do Gateway correspondente (OmegaPay ou VizzionPay)
+    // 3. Consulta a API oficial do Gateway correspondente (AmploPay, OmegaPay ou VizzionPay)
+    const isAmplo = depositData?.gateway === 'amplopay';
     const isOmega = depositData?.gateway === 'omegapay';
     let tx: any = null;
     let isPaid = false;
-    let actualGateway = isOmega ? 'omegapay' : 'vizzionpay';
+    let actualGateway = isAmplo ? 'amplopay' : (isOmega ? 'omegapay' : 'vizzionpay');
 
     try {
-      if (isOmega) {
+      if (isAmplo) {
+        tx = await amploPay.getTransaction(txId, depositData?.externalReference);
+        isPaid = amploPay.isTransactionPaid(tx);
+      } else if (isOmega) {
         tx = await omegaPay.getTransaction(txId, depositData?.externalReference);
         isPaid = omegaPay.isTransactionPaid(tx);
       } else {
@@ -60,14 +65,14 @@ export async function GET(req: Request) {
         isPaid = vizzionPay.isTransactionPaid(tx);
       }
 
-      // Se não encontrou no gateway esperado e o depósito não tinha gateway explícito, tenta o outro
+      // Se não encontrou no gateway esperado e o depósito não tinha gateway explícito, tenta AmploPay
       if (!tx && !depositData?.gateway) {
         try {
-          const altTx = await omegaPay.getTransaction(txId, depositData?.externalReference);
+          const altTx = await amploPay.getTransaction(txId, depositData?.externalReference);
           if (altTx) {
             tx = altTx;
-            isPaid = omegaPay.isTransactionPaid(altTx);
-            actualGateway = 'omegapay';
+            isPaid = amploPay.isTransactionPaid(altTx);
+            actualGateway = 'amplopay';
           }
         } catch (_) {}
       }
